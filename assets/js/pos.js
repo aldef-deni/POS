@@ -434,6 +434,11 @@
 
             this.render();
             window.posModal.open('payment-modal');
+
+            // The scan field normally holds focus; if it kept it here every
+            // digit typed would land in the barcode box and Enter would fire
+            // a product lookup instead of taking payment.
+            el.scan.blur();
         },
 
         render() {
@@ -836,17 +841,23 @@
     /* --- Keyboard shortcuts ------------------------------------------------ */
 
     document.addEventListener('keydown', (event) => {
-        // Never hijack typing inside a field.
-        const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+        // While taking payment the keyboard drives the amount field, so the
+        // dialog claims these keys before anything else can act on them.
+        if (document.getElementById('payment-modal').classList.contains('is-open')) {
+            if (/^[0-9]$/.test(event.key)) { event.preventDefault(); pay.press(event.key); return; }
+
+            switch (event.key) {
+                case 'Backspace': event.preventDefault(); pay.press('back'); return;
+                case 'Delete':    event.preventDefault(); pay.press('clear'); return;
+                case '+':         event.preventDefault(); pay.addTender(); return;
+                case 'Enter':     event.preventDefault(); pay.submit(); return;
+                default: return;
+            }
+        }
 
         if (event.key === 'F2') { event.preventDefault(); focusScan(); return; }
         if (event.key === 'F4') { event.preventDefault(); pay.open(); return; }
         if (event.key === 'F9') { event.preventDefault(); holdCart(); return; }
-
-        if (event.key === 'Enter' && document.getElementById('payment-modal').classList.contains('is-open') && !typing) {
-            event.preventDefault();
-            pay.submit();
-        }
     });
 
     /* --- Boot -------------------------------------------------------------- */
@@ -856,6 +867,12 @@
     renderCart();
     loadHeld();
     focusScan();
+
+    // Hand the keyboard back to the scanner once a dialog is dismissed,
+    // including via Escape where no click happens to restore it.
+    ['payment-modal', 'done-modal', 'held-modal'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('modal:close', focusScan);
+    });
 
     // Keep the scan field ready whenever the operator clicks empty space.
     document.addEventListener('click', (event) => {

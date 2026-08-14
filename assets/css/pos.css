@@ -284,23 +284,54 @@
 
 /* --- Payment modal ------------------------------------------------------- */
 
-.pay-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; }
+/* The payment dialog is sized to clear a 768px-tall laptop screen without
+   scrolling: a cashier taking money should never have to reach for a
+   scrollbar. Every measurement below is part of that budget. */
+#payment-modal .modal__panel { max-width: 920px; max-height: calc(100dvh - 16px); }
+#payment-modal .keypad button { padding: 9px 0; font-size: 17px; }
+#payment-modal .modal__head { padding: 14px 22px 10px; }
+#payment-modal .modal__body { padding: 14px 22px; }
+#payment-modal .modal__foot { padding: 11px 22px; }
+
+.pay-grid { display: grid; grid-template-columns: 1.06fr 1fr; gap: 20px; }
 
 .pay-due {
     background: linear-gradient(150deg, var(--brand-600), var(--brand-800));
     color: #fff;
     border-radius: var(--r-lg);
-    padding: 20px 22px;
+    padding: 13px 16px;
     box-shadow: var(--sh-brand);
 }
-.pay-due__label { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; opacity: .8; font-weight: 600; }
-.pay-due__value { font-size: 34px; font-weight: 720; letter-spacing: -.03em; margin-top: 5px; font-variant-numeric: tabular-nums; }
+.pay-due__label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; opacity: .8; font-weight: 600; }
+.pay-due__value { font-size: 29px; font-weight: 720; letter-spacing: -.03em; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.pay-due__rest { font-size: 11.5px; opacity: .84; margin-top: 4px; }
 
-.method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+/* Amount field with its own clear key, which keeps the keypad to four rows. */
+.pay-amount-row { display: flex; gap: 8px; align-items: stretch; }
+
+.pay-clear {
+    flex: 0 0 54px;
+    border: 1px solid var(--bad-200);
+    border-radius: var(--r-md);
+    background: var(--bad-50);
+    color: var(--bad-600);
+    font-size: 15px; font-weight: 680;
+    cursor: pointer;
+    transition: background .12s ease;
+}
+.pay-clear:hover { background: var(--bad-200); color: var(--bad-700); }
+
+.pay-side { display: flex; flex-direction: column; }
+
+/* Split payments add a row each; capping the list keeps the dialog inside
+   the screen no matter how many tenders an operator stacks up. */
+#payment-modal [data-tenders] { max-height: 108px; overflow-y: auto; }
+
+.method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 
 .method {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    padding: 13px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 10px 6px;
     border: 1px solid var(--border-strong);
     border-radius: var(--r-md);
     background: var(--surface);
@@ -329,9 +360,9 @@
 .keypad button.is-wide { grid-column: span 2; }
 .keypad button.is-clear { background: var(--bad-50); color: var(--bad-600); border-color: var(--bad-200); }
 
-.quick-cash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.quick-cash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .quick-cash button {
-    padding: 9px 4px;
+    padding: 7px 4px;
     border: 1px solid var(--border-strong);
     border-radius: var(--r-sm);
     background: var(--bg-sunken);
@@ -342,12 +373,13 @@
 .quick-cash button:hover { background: var(--brand-50); border-color: var(--brand-400); color: var(--brand-700); }
 
 .pay-amount {
-    width: 100%;
-    padding: 13px 15px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 14px;
     border: 2px solid var(--brand-500);
     border-radius: var(--r-md);
     background: var(--surface);
-    font-size: 25px; font-weight: 690;
+    font-size: 23px; font-weight: 690;
     text-align: right;
     font-variant-numeric: tabular-nums;
     letter-spacing: -.02em;
@@ -355,16 +387,16 @@
 .pay-amount:focus { outline: none; box-shadow: var(--ring); }
 
 .change-box {
-    padding: 14px 16px;
+    padding: 11px 14px;
     border-radius: var(--r-md);
     background: var(--ok-50);
     border: 1px solid var(--ok-200);
     display: flex; justify-content: space-between; align-items: center;
 }
 .change-box--short { background: var(--bad-50); border-color: var(--bad-200); }
-.change-box__label { font-size: 12px; font-weight: 620; color: var(--ok-700); text-transform: uppercase; letter-spacing: .06em; }
+.change-box__label { font-size: 11.5px; font-weight: 620; color: var(--ok-700); text-transform: uppercase; letter-spacing: .06em; }
 .change-box--short .change-box__label { color: var(--bad-700); }
-.change-box__value { font-size: 23px; font-weight: 700; color: var(--ok-700); font-variant-numeric: tabular-nums; }
+.change-box__value { font-size: 21px; font-weight: 700; color: var(--ok-700); font-variant-numeric: tabular-nums; }
 .change-box--short .change-box__value { color: var(--bad-700); }
 
 /* Split payment rows */

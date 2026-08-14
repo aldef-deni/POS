@@ -188,26 +188,25 @@
 
             <div class="modal__body">
                 <div class="pay-grid">
-                    {{-- Left: amount entry --}}
+                    {{-- Left: amount entry.
+                         The keypad is four rows, not five: "Hapus" sits beside
+                         the amount field and "+ Split" moved next to the tender
+                         list it actually feeds, which is what lets the whole
+                         dialog clear a laptop screen without scrolling. --}}
                     <div>
-                        <div class="pay-due mb-16">
+                        <div class="pay-due mb-12">
                             <div class="pay-due__label">Total Tagihan</div>
                             <div class="pay-due__value" data-due>—</div>
-                            <div style="font-size:12px;opacity:.82;margin-top:6px">
+                            <div class="pay-due__rest">
                                 Sisa yang harus dibayar: <b data-outstanding>—</b>
                             </div>
                         </div>
 
-                        <label class="field__label mb-8" style="display:block">Nominal Diterima</label>
-                        <input type="text" class="pay-amount mb-12" data-amount readonly placeholder="0">
+                        <label class="field__label mb-6" style="display:block">Nominal Diterima</label>
 
-                        <div class="quick-cash mb-12" data-cash-only>
-                            <button type="button" data-exact>Uang Pas</button>
-                            @foreach ([20000, 50000, 100000, 150000, 200000] as $amount)
-                                <button type="button" data-quick="{{ $amount }}">
-                                    {{ number_format($amount / 1000, 0, ',', '.') }}rb
-                                </button>
-                            @endforeach
+                        <div class="pay-amount-row mb-10">
+                            <input type="text" class="pay-amount" data-amount readonly placeholder="0">
+                            <button type="button" class="pay-clear" data-key="clear" title="Hapus nominal">C</button>
                         </div>
 
                         <div class="keypad">
@@ -217,38 +216,56 @@
                             <button type="button" data-key="000">000</button>
                             <button type="button" data-key="0">0</button>
                             <button type="button" data-key="back">⌫</button>
-                            <button type="button" class="is-clear is-wide" data-key="clear">Hapus</button>
-                            <button type="button" data-add-tender title="Tambah sebagai pembayaran terpisah">+ Split</button>
                         </div>
                     </div>
 
                     {{-- Right: method, tenders, change --}}
-                    <div>
-                        <label class="field__label mb-8" style="display:block">Metode Pembayaran</label>
-                        <div class="method-grid mb-16">
+                    <div class="pay-side">
+                        <label class="field__label mb-6" style="display:block">Metode Pembayaran</label>
+                        <div class="method-grid mb-12">
                             @foreach ($paymentMethods as $value => $label)
                                 <button type="button" class="method {{ $value === 'cash' ? 'is-active' : '' }}"
                                         data-method="{{ $value }}">
-                                    <x-icon name="{{ $value === 'cash' ? 'wallet' : ($value === 'qris' ? 'qr' : 'credit-card') }}" size="19"/>
+                                    <x-icon name="{{ $value === 'cash' ? 'wallet' : ($value === 'qris' ? 'qr' : 'credit-card') }}" size="18"/>
                                     {{ $label }}
                                 </button>
                             @endforeach
                         </div>
 
-                        <div data-tenders class="stack g-6 mb-16"></div>
+                        {{-- Quick amounts live beside the methods rather than
+                             under the keypad: it keeps the tall left column
+                             short enough for the dialog to fit one screen,
+                             and it only applies to cash anyway. --}}
+                        <div data-cash-only>
+                            <label class="field__label mb-6" style="display:block">Nominal Cepat</label>
+                            <div class="quick-cash mb-12">
+                                <button type="button" data-exact>Uang Pas</button>
+                                @foreach ([20000, 50000, 100000, 150000, 200000] as $amount)
+                                    <button type="button" data-quick="{{ $amount }}">
+                                        {{ number_format($amount / 1000, 0, ',', '.') }}rb
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="between mb-6">
+                            <label class="field__label" style="margin:0">Pembayaran Diterima</label>
+                            <button type="button" class="btn btn--outline btn--sm" data-add-tender
+                                    title="Simpan nominal ini lalu bayar sisanya dengan metode lain">
+                                <x-icon name="plus" size="13"/> Split
+                            </button>
+                        </div>
+
+                        <div data-tenders class="stack g-6 mb-12"></div>
 
                         <div class="change-box" data-change-box>
                             <div class="change-box__label" data-change-label>Kembalian</div>
                             <div class="change-box__value" data-change-value>—</div>
                         </div>
 
-                        <div class="alert alert--info mt-16" style="margin-bottom:0">
-                            <x-icon name="alert" size="16" class="alert__icon"/>
-                            <div class="tiny">
-                                Untuk pembayaran gabungan, masukkan nominal lalu tekan <b>+ Split</b>,
-                                ganti metode, dan masukkan sisanya.
-                            </div>
-                        </div>
+                        <p class="tiny subtle mt-10" style="line-height:1.5">
+                            Bayar gabungan: masukkan nominal, tekan <b>Split</b>, ganti metode, lalu masukkan sisanya.
+                        </p>
                     </div>
                 </div>
             </div>
