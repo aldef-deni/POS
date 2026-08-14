@@ -42,7 +42,9 @@
         scan: root.querySelector('[data-scan]'),
         lines: root.querySelector('[data-lines]'),
         totals: root.querySelector('[data-totals]'),
-        count: root.querySelector('[data-cart-count]'),
+        // Two of these exist — the desktop header and the mobile sheet
+        // handle — so both must be kept in step.
+        counts: root.querySelectorAll('[data-cart-count]'),
         payBtn: root.querySelector('[data-pay]'),
         customerLabel: root.querySelector('[data-customer-label]'),
         cart: root.querySelector('.pos-cart'),
@@ -313,7 +315,11 @@
             }).join('');
         }
 
-        el.count.textContent = state.lines.length ? state.lines.length + ' item' : 'Kosong';
+        const countLabel = state.lines.length
+            ? state.lines.length + ' item · ' + money(t.total)
+            : 'Kosong';
+
+        el.counts.forEach((node) => { node.textContent = countLabel; });
 
         const rows = [
             ['Subtotal', money(t.subtotal), ''],
