@@ -26,8 +26,8 @@
     {{-- ======================= Header ======================= --}}
     <header class="pos-top">
         <div class="pos-top__store grow">
-            <div class="brand-mark" style="width:34px;height:34px;flex-basis:34px;font-size:13px">
-                {{ mb_substr($tenant?->name ?? 'KP', 0, 2) }}
+            <div class="aldef-chip aldef-chip--sm">
+                <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="Aldef Tech">
             </div>
             <div style="min-width:0">
                 <div class="pos-top__name truncate">{{ $tenant?->name }}</div>

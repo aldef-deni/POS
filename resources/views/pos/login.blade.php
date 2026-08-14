@@ -12,23 +12,14 @@
 <div class="pos-auth">
     <div class="pos-auth__card">
         <aside class="pos-auth__aside">
-            <div>
-                <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech" class="aldef-lockup mb-20">
+            <div class="t-center">
+                <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+                     class="aldef-lockup" style="margin-inline:auto">
 
-                <div class="row g-10 mb-24">
-                    <div class="aldef-chip aldef-chip--sm"
-                         style="background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)">
-                        <x-icon name="store" size="16"/>
-                    </div>
-                    <div>
-                        <div style="font-weight:660">{{ $tenant?->name ?? 'Kasir POS' }}</div>
-                        <div style="font-size:11.5px;opacity:.7">Terminal Kasir</div>
-                    </div>
+                <div class="store-name">
+                    {{ $tenant?->name ?? 'Kasir POS' }}
+                    <span class="store-name__rule"></span>
                 </div>
-
-                <h2>Siap melayani<br>pelanggan berikutnya.</h2>
-                <p>Pilih nama Anda, masukkan PIN, lalu mulai bertugas. Terminal ini berdiri sendiri
-                   dan tidak memerlukan akses dashboard.</p>
             </div>
 
             <div>
@@ -61,8 +52,8 @@
             <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
                  class="aldef-lockup aldef-lockup--sm mb-16 aldef-lockup--mobile">
 
-            <h1 style="font-size:23px">Masuk Kasir</h1>
-            <p class="muted mt-4" style="font-size:13.5px">Pilih operator, lalu masukkan PIN Anda.</p>
+            <h1 style="font-size:22px">Masuk Kasir</h1>
+            <p class="muted mt-4" style="font-size:13px">Pilih operator, lalu masukkan PIN Anda.</p>
 
             @if (session('error'))
                 <div class="alert alert--bad mt-16">
@@ -106,7 +97,7 @@
                     <input type="hidden" name="user_id" id="pin-user">
                     <input type="hidden" name="pin" id="pin-value">
 
-                    <div class="tiny subtle upper mb-8">Pilih operator</div>
+                    <div class="tiny subtle upper mb-8 t-center">Pilih operator</div>
                     <div class="operator-strip mb-16">
                         @foreach ($operators as $operator)
                             <button type="button" class="operator" data-operator="{{ $operator->id }}">
@@ -187,7 +178,7 @@
             if (!selected) {
                 hint.textContent = 'Pilih operator terlebih dahulu';
             } else if (pin.length < MIN_PIN) {
-                hint.textContent = 'Masukkan PIN Anda (4–8 digit)';
+                hint.textContent = 'Masukkan PIN Anda';
             } else {
                 hint.textContent = 'Tekan Masuk atau Enter untuk melanjutkan';
             }

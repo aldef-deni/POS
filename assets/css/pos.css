@@ -115,24 +115,64 @@
     align-content: start;
 }
 
+/* Product tiles sit proud of the grid: a soft wash of the category colour
+   fading down into the surface, a hairline highlight along the top edge,
+   and a layered shadow beneath. The colour variables are set inline per
+   card by pos.js from the category's own hex value. */
 .pos-item {
     position: relative;
     display: flex; flex-direction: column;
-    background: var(--surface);
+    background:
+        linear-gradient(180deg, var(--cat-soft, transparent) 0%, transparent 46%),
+        var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    padding: 12px;
+    border-radius: var(--r-lg);
+    padding: 13px 12px 12px;
     cursor: pointer;
     text-align: left;
-    transition: border-color .13s ease, box-shadow .13s ease, transform .08s ease;
     overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .9),
+        inset 0 -1px 0 rgba(15, 23, 42, .04),
+        0 1px 2px rgba(15, 23, 42, .06),
+        0 10px 20px -10px rgba(15, 23, 42, .28);
+    transition: transform .16s cubic-bezier(.16, 1, .3, 1),
+                box-shadow .16s ease,
+                border-color .16s ease;
 }
-.pos-item:hover { border-color: var(--brand-400); box-shadow: var(--sh-md); }
-.pos-item:active { transform: scale(.976); }
+
+.pos-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--cat-line, var(--brand-400));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .9),
+        0 2px 4px rgba(15, 23, 42, .06),
+        0 18px 30px -12px var(--cat-glow, rgba(15, 23, 42, .3));
+}
+
+.pos-item:active { transform: translateY(0) scale(.982); }
 .pos-item:focus-visible { outline: none; box-shadow: var(--ring); }
 
-/* Category colour as a top accent stripe. */
-.pos-item__accent { position: absolute; inset: 0 0 auto 0; height: 3px; }
+/* Dark mode gets a faint top highlight instead of a white one, otherwise
+   the tiles look like cut-outs. */
+[data-theme="dark"] .pos-item {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .07),
+        0 1px 2px rgba(0, 0, 0, .4),
+        0 8px 20px -10px rgba(0, 0, 0, .6);
+}
+[data-theme="dark"] .pos-item:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .1),
+        0 2px 6px rgba(0, 0, 0, .45),
+        0 20px 34px -14px var(--cat-glow, rgba(0, 0, 0, .7));
+}
+
+/* Category colour as a top accent, fading out to the right. */
+.pos-item__accent {
+    position: absolute; inset: 0 0 auto 0; height: 3px;
+    opacity: .9;
+}
 
 .pos-item__name {
     font-size: 13px; font-weight: 600; line-height: 1.35;
@@ -273,9 +313,9 @@
 .method.is-active { background: var(--brand-600); border-color: var(--brand-600); color: #fff; box-shadow: var(--sh-brand); }
 
 /* Cash keypad */
-.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .keypad button {
-    padding: 15px 0;
+    padding: 12px 0;
     border: 1px solid var(--border-strong);
     border-radius: var(--r-md);
     background: var(--surface);
@@ -362,11 +402,14 @@
 
 /* --- Sign-in / shift screens --------------------------------------------- */
 
+/* The sign-in screen is designed to sit inside one viewport with no page
+   scrolling — an operator at a counter should never have to scroll to
+   reach the keypad. Spacing below is deliberately tight for that reason. */
 .pos-auth {
     min-height: 100vh;
     min-height: 100dvh;
     display: flex; align-items: center; justify-content: center;
-    padding: 22px;
+    padding: 16px;
     background:
         radial-gradient(1100px 620px at 12% -8%, rgba(99, 102, 241, .16), transparent 60%),
         radial-gradient(900px 520px at 105% 110%, rgba(16, 185, 129, .12), transparent 55%),
@@ -374,26 +417,46 @@
 }
 
 .pos-auth__card {
-    width: 100%; max-width: 940px;
+    width: 100%; max-width: 900px;
+    max-height: calc(100dvh - 32px);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-2xl);
     box-shadow: var(--sh-xl);
     overflow: hidden;
     display: grid;
-    grid-template-columns: 1.05fr 1fr;
+    grid-template-columns: 1.02fr 1fr;
 }
 
 .pos-auth__aside {
-    padding: 40px 38px;
+    padding: 30px 32px;
     background: linear-gradient(155deg, var(--brand-700), var(--brand-800) 55%, #1e1b4b);
     color: #fff;
-    display: flex; flex-direction: column; justify-content: space-between;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 20px;
 }
 .pos-auth__aside h2 { font-size: 26px; letter-spacing: -.03em; }
 .pos-auth__aside p { opacity: .78; font-size: 13.5px; margin-top: 9px; line-height: 1.6; }
 
-.pos-auth__feature { display: flex; gap: 11px; align-items: flex-start; margin-top: 15px; font-size: 13px; }
+/* Store name, given a restrained luxury treatment: wide tracking, small
+   caps weight, and a hairline that fades out at both ends. */
+.store-name {
+    margin-top: 18px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, .94);
+}
+
+.store-name__rule {
+    display: block;
+    width: 52px; height: 1px;
+    margin: 13px auto 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent);
+}
+
+.pos-auth__feature { display: flex; gap: 11px; align-items: flex-start; margin-top: 13px; font-size: 13px; }
 .pos-auth__feature-icon {
     width: 30px; height: 30px; flex: 0 0 30px;
     border-radius: var(--r-sm);
@@ -401,7 +464,12 @@
     display: flex; align-items: center; justify-content: center;
 }
 
-.pos-auth__form { padding: 40px 38px; }
+.pos-auth__form {
+    padding: 28px 32px;
+    /* Only engages on unusually short viewports; the layout is tuned so a
+       normal screen never triggers it. */
+    overflow-y: auto;
+}
 
 /* The lockup lives in the branded panel on wide screens; the copy inside
    the form only appears once that panel is dropped on small screens. */
@@ -410,7 +478,7 @@
 /* PIN keypad on the sign-in screen */
 .pin-display {
     display: flex; justify-content: center; gap: 12px;
-    margin: 20px 0 22px;
+    margin: 14px 0 10px;
 }
 .pin-dot {
     width: 15px; height: 15px;
@@ -420,17 +488,30 @@
 }
 .pin-dot.is-filled { background: var(--brand-600); border-color: var(--brand-600); transform: scale(1.14); }
 
-.operator-strip { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 6px; }
+/* Tightened rhythm so the whole card clears a laptop viewport. */
+.pos-auth__form .divider { margin: 14px 0; }
+.pos-auth__form .alert { margin-bottom: 12px; }
+.pos-auth__aside .aldef-lockup { max-width: 168px; }
+
+.operator-strip {
+    display: flex; gap: 9px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    /* "safe" keeps the first card reachable when the row does overflow;
+       the plain value is the fallback for browsers without it. */
+    justify-content: center;
+    justify-content: safe center;
+}
 
 .operator {
     flex: 0 0 auto;
-    display: flex; flex-direction: column; align-items: center; gap: 7px;
-    padding: 12px 15px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 10px 14px;
     border: 1px solid var(--border);
     border-radius: var(--r-md);
     background: var(--surface);
     cursor: pointer;
-    min-width: 92px;
+    min-width: 90px;
     transition: all .13s ease;
 }
 .operator:hover { border-color: var(--brand-400); }

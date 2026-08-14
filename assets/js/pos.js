@@ -267,8 +267,11 @@
             else if (p.favorite) flag = '<span class="pos-item__flag pos-item__flag--fav">★</span>';
 
             return '' +
-                '<button type="button" class="pos-item' + (out ? ' is-out' : '') + '" data-add="' + p.id + '"' + (out ? ' disabled' : '') + '>' +
-                    '<span class="pos-item__accent" style="background:' + escapeAttr(p.color) + '"></span>' +
+                '<button type="button" class="pos-item' + (out ? ' is-out' : '') + '"' +
+                    ' style="' + tint(p.color) + '"' +
+                    ' data-add="' + p.id + '"' + (out ? ' disabled' : '') + '>' +
+                    '<span class="pos-item__accent" style="background:linear-gradient(90deg,'
+                        + escapeAttr(p.color) + ',rgba(255,255,255,0))"></span>' +
                     flag +
                     '<span class="pos-item__name">' + escapeHtml(p.name) + '</span>' +
                     '<span class="pos-item__price">' + money(p.price) + '</span>' +
@@ -357,6 +360,28 @@
 
     function escapeAttr(value) {
         return escapeHtml(value).replace(/`/g, '');
+    }
+
+    /**
+     * Turn a category's hex colour into the soft tints a product tile uses.
+     * Computed here rather than with CSS color-mix so the tiles render the
+     * same on older terminal browsers.
+     */
+    function tint(hex) {
+        var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+        var r = 100, g = 116, b = 139;   // slate fallback
+
+        if (m) {
+            var n = parseInt(m[1], 16);
+            r = (n >> 16) & 255;
+            g = (n >> 8) & 255;
+            b = n & 255;
+        }
+
+        return '--cat:rgb(' + r + ',' + g + ',' + b + ');'
+            + '--cat-soft:rgba(' + r + ',' + g + ',' + b + ',.13);'
+            + '--cat-line:rgba(' + r + ',' + g + ',' + b + ',.55);'
+            + '--cat-glow:rgba(' + r + ',' + g + ',' + b + ',.38);';
     }
 
     /* --- Barcode scanning -------------------------------------------------- */
