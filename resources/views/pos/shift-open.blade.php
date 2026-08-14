@@ -80,6 +80,14 @@
 
             <div class="divider"></div>
 
+            {{-- Owner/Supervisor may have signed in here only to check the
+                 till; don't strand them on the shift screen. --}}
+            @allow('dashboard.access')
+                <a href="{{ route('admin.dashboard') }}" class="btn btn--outline btn--block mb-12">
+                    <x-icon name="gauge" size="16"/> Buka Dashboard Pengelola
+                </a>
+            @endallow
+
             <form method="POST" action="{{ route('pos.logout') }}" class="t-center">
                 @csrf
                 <button type="submit" class="btn btn--ghost btn--sm">

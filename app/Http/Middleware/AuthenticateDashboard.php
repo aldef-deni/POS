@@ -18,8 +18,17 @@ class AuthenticateDashboard
     public function handle(Request $request, Closure $next): Response
     {
         if (! auth('web')->check()) {
-            return redirect()->route('admin.login')
-                ->with('error', 'Silakan masuk untuk mengakses dashboard.');
+            // Being signed in at the till grants nothing here — say so
+            // plainly, otherwise an Owner who is already logged into the
+            // terminal cannot tell why they are being asked again.
+            $atTerminal = auth('pos')->user();
+
+            $message = $atTerminal?->canAccessDashboard()
+                ? "Anda sedang masuk sebagai operator kasir ({$atTerminal->name}). "
+                    .'Dashboard memakai sesi terpisah — silakan masuk kembali di sini.'
+                : 'Silakan masuk untuk mengakses dashboard.';
+
+            return redirect()->route('admin.login')->with('error', $message);
         }
 
         $user = auth('web')->user();

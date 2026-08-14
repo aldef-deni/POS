@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use App\Support\Role;
 use Tests\PosTestCase;
 
 /**
@@ -24,12 +26,51 @@ class RoleAccessTest extends PosTestCase
     public function test_signing_in_at_the_terminal_does_not_grant_a_dashboard_session(): void
     {
         $this->post('/pos/login', [
-            'login' => 'kasir',
-            'password' => 'rahasia123',
+            'user_id' => $this->kasir->id,
+            'pin' => '1234',
         ]);
 
         $this->assertTrue(auth('pos')->check(), 'operator harus masuk pada guard pos');
         $this->assertFalse(auth('web')->check(), 'guard dashboard tidak boleh ikut aktif');
+    }
+
+    public function test_terminal_lists_only_cashiers(): void
+    {
+        $response = $this->get('/pos/login');
+
+        $response->assertOk()
+            ->assertSee($this->kasir->name)
+            ->assertDontSee($this->owner->name)
+            ->assertDontSee($this->supervisor->name);
+    }
+
+    public function test_terminal_offers_no_password_sign_in(): void
+    {
+        $response = $this->get('/pos/login');
+
+        $response->assertOk()
+            ->assertDontSee('name="password"', false)
+            ->assertDontSee('Kata Sandi');
+    }
+
+    public function test_terminal_rejects_a_password_attempt(): void
+    {
+        // PIN is the only accepted credential at the till.
+        $this->post('/pos/login', [
+            'login' => 'kasir',
+            'password' => 'rahasia123',
+        ])->assertSessionHasErrors(['user_id', 'pin']);
+
+        $this->assertFalse(auth('pos')->check());
+    }
+
+    public function test_terminal_login_explains_itself_when_no_cashier_has_a_pin(): void
+    {
+        User::where('role', Role::Kasir->value)->update(['pos_pin' => null]);
+
+        $this->get('/pos/login')
+            ->assertOk()
+            ->assertSee('Belum ada kasir yang siap bertugas');
     }
 
     public function test_cashier_is_redirected_away_from_the_dashboard(): void
@@ -73,6 +114,88 @@ class RoleAccessTest extends PosTestCase
         // Denied: anything that changes how the business is configured.
         $this->get('/dashboard/users')->assertForbidden();
         $this->get('/dashboard/settings')->assertForbidden();
+    }
+
+    public function test_signed_in_cashier_reopening_the_terminal_login_is_never_sent_to_the_dashboard(): void
+    {
+        $this->actingAs($this->kasir, 'pos');
+
+        // Laravel's stock guest redirect points at /dashboard, which would
+        // bounce a cashier onward to /admin/login. They must go to the till.
+        $response = $this->get('/pos/login');
+
+        $response->assertRedirect(route('pos.index'));
+        $this->assertStringNotContainsString('admin', $response->headers->get('Location'));
+    }
+
+    public function test_signed_in_cashier_following_that_redirect_lands_on_a_terminal_page(): void
+    {
+        $this->actingAs($this->kasir, 'pos');
+
+        // Follow the whole chain the way a browser would.
+        $response = $this->followingRedirects()->get('/pos/login');
+
+        $response->assertOk();
+        // Without an open shift the terminal asks them to open one — still
+        // a terminal screen, never the dashboard sign-in.
+        $response->assertSee('Buka Shift');
+        $response->assertDontSee('Masuk Dashboard');
+    }
+
+    public function test_signed_in_owner_reopening_the_dashboard_login_goes_to_the_dashboard(): void
+    {
+        $this->actingAs($this->owner, 'web');
+
+        $this->get('/admin/login')->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_owner_signing_in_at_the_dashboard_reaches_the_dashboard(): void
+    {
+        $response = $this->post('/admin/login', [
+            'login' => 'owner',
+            'password' => 'rahasia123',
+        ]);
+
+        $response->assertRedirect(route('admin.dashboard'));
+        $this->assertTrue(auth('web')->check());
+    }
+
+    public function test_the_two_guards_are_independent(): void
+    {
+        // A till session and a dashboard session can coexist in one browser
+        // without either one leaking permissions into the other.
+        $this->post('/pos/login', ['user_id' => $this->kasir->id, 'pin' => '1234']);
+        $this->post('/admin/login', ['login' => 'owner', 'password' => 'rahasia123']);
+
+        $this->assertTrue(auth('pos')->check());
+        $this->assertTrue(auth('web')->check());
+
+        $this->assertSame($this->kasir->id, auth('pos')->id());
+        $this->assertSame($this->owner->id, auth('web')->id());
+
+        $this->get('/dashboard')->assertOk();
+        $this->get('/pos/shift/open')->assertOk();
+    }
+
+    public function test_terminal_offers_owner_a_route_back_to_the_dashboard(): void
+    {
+        $this->actingAs($this->owner, 'pos');
+        $this->openShift($this->owner);
+
+        $this->get('/pos')
+            ->assertOk()
+            ->assertSee(route('admin.dashboard'))
+            ->assertSee('Dashboard Pengelola');
+    }
+
+    public function test_cashier_is_never_shown_a_dashboard_link(): void
+    {
+        $this->actingAs($this->kasir, 'pos');
+        $this->openShift();
+
+        $this->get('/pos')
+            ->assertOk()
+            ->assertDontSee('Dashboard Pengelola');
     }
 
     public function test_four_digit_pin_signs_the_operator_in(): void

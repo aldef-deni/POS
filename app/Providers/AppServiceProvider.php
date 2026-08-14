@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Support\Tenancy;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
@@ -30,7 +32,29 @@ class AppServiceProvider extends ServiceProvider
         Paginator::defaultView('components.pagination');
         Paginator::defaultSimpleView('components.pagination');
 
+        $this->registerGuestRedirect();
         $this->registerBladeDirectives();
+    }
+
+    /**
+     * Decide where an already-signed-in visitor goes when they open a
+     * sign-in screen again.
+     *
+     * Laravel's default hunts for a route whose URI is "dashboard" and sends
+     * everyone there. For this app that is wrong: an operator who reopens
+     * /pos/login would be bounced to /dashboard, refused (no `web` session),
+     * and dumped on /admin/login — a back-office page a cashier must never
+     * be sent to. Route each visitor back to the door they knocked on.
+     */
+    protected function registerGuestRedirect(): void
+    {
+        RedirectIfAuthenticated::redirectUsing(function (Request $request) {
+            if ($request->is('pos', 'pos/*')) {
+                return route('pos.index');
+            }
+
+            return route('admin.dashboard');
+        });
     }
 
     /**

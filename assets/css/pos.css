@@ -403,6 +403,10 @@
 
 .pos-auth__form { padding: 40px 38px; }
 
+/* The lockup lives in the branded panel on wide screens; the copy inside
+   the form only appears once that panel is dropped on small screens. */
+.aldef-lockup--mobile { display: none; }
+
 /* PIN keypad on the sign-in screen */
 .pin-display {
     display: flex; justify-content: center; gap: 12px;
@@ -444,6 +448,7 @@
     .pay-grid { grid-template-columns: 1fr; gap: 16px; }
     .pos-auth__card { grid-template-columns: 1fr; max-width: 460px; }
     .pos-auth__aside { display: none; }
+    .aldef-lockup--mobile { display: block; margin-inline: auto; }
 }
 
 @media (max-width: 860px) {

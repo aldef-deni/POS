@@ -12,9 +12,11 @@
     <div class="pos-auth__card">
         <aside class="pos-auth__aside">
             <div>
+                <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech" class="aldef-lockup mb-20">
+
                 <div class="row g-10 mb-24">
-                    <div class="brand-mark" style="background:rgba(255,255,255,.16);box-shadow:none">
-                        {{ mb_substr($tenant?->name ?? 'KP', 0, 2) }}
+                    <div class="aldef-chip aldef-chip--sm" style="background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)">
+                        <x-icon name="store" size="16"/>
                     </div>
                     <div>
                         <div style="font-weight:660">{{ $tenant?->name ?? 'Kasir POS' }}</div>
@@ -52,6 +54,10 @@
         </aside>
 
         <div class="pos-auth__form">
+            {{-- Repeated here because the branded panel is hidden on phones. --}}
+            <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+                 class="aldef-lockup aldef-lockup--sm mb-16 aldef-lockup--mobile">
+
             <h1 style="font-size:23px">Masuk Dashboard</h1>
             <p class="muted mt-4" style="font-size:13.5px">Khusus Owner dan Supervisor.</p>
 

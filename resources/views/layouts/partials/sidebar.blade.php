@@ -30,10 +30,14 @@
 
 <aside class="sidebar no-print">
     <div class="sidebar__brand">
-        <div class="brand-mark">{{ mb_substr($tenant?->name ?? 'KP', 0, 2) }}</div>
+        <div class="aldef-chip">
+            <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="Aldef Tech">
+        </div>
         <div class="grow" style="min-width:0">
             <div class="brand-name truncate">{{ $tenant?->name ?? 'Kasir POS' }}</div>
-            <div class="brand-sub">{{ ucfirst($tenant?->plan ?? 'pro') }} · {{ $tenant?->business_type ?? 'Retail' }}</div>
+            <div class="brand-sub truncate">
+                {{ ucfirst($tenant?->plan ?? 'pro') }} · {{ $tenant?->business_type ?? 'Retail' }}
+            </div>
         </div>
     </div>
 
@@ -72,5 +76,12 @@
             <x-icon name="scan" size="15"/>
             Terminal Kasir
         </a>
+
+        <div class="t-center mt-12">
+            <span class="aldef-credit">
+                <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="">
+                Aldef Tech
+            </span>
+        </div>
     </div>
 </aside>

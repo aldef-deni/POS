@@ -65,6 +65,15 @@
                     <x-icon name="moon" size="16"/> <span data-theme-label>Mode Gelap</span>
                 </button>
 
+                {{-- An Owner or Supervisor working the till needs a way back
+                     to the back office; a Kasir never sees this. --}}
+                @allow('dashboard.access')
+                    <div class="dropdown__sep"></div>
+                    <a href="{{ route('admin.dashboard') }}" class="dropdown__item">
+                        <x-icon name="gauge" size="16"/> Dashboard Pengelola
+                    </a>
+                @endallow
+
                 <div class="dropdown__sep"></div>
 
                 <a href="{{ route('pos.shift.close') }}" class="dropdown__item">

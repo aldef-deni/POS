@@ -52,10 +52,15 @@
 <body>
 <div class="hero">
     <div class="hero__inner">
-        <span class="hero__badge">
-            <span class="dot dot--ok"></span>
-            {{ $tenant?->name ?? 'Kasir POS' }} · Sistem aktif
-        </span>
+        <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+             style="width:100%;max-width:168px;height:auto;margin-bottom:22px">
+
+        <div>
+            <span class="hero__badge">
+                <span class="dot dot--ok"></span>
+                {{ $tenant?->name ?? 'Kasir POS' }} · Sistem aktif
+            </span>
+        </div>
 
         <h1>Point of Sale<br>yang rapi, cepat, dan siap pakai.</h1>
 
@@ -69,7 +74,7 @@
                 <div class="gate__icon"><x-icon name="scan" size="24"/></div>
                 <h3>Terminal Kasir</h3>
                 <p class="muted mt-4" style="font-size:13.5px">
-                    Untuk operator di meja kasir. Masuk dengan username &amp; PIN, buka shift, lalu mulai melayani.
+                    Untuk operator di meja kasir. Pilih nama Anda, masukkan PIN, buka shift, lalu mulai melayani.
                 </p>
                 <div class="row g-6 mt-16 semi" style="color:var(--ok-600);font-size:13px">
                     Buka kasir <x-icon name="arrow-right" size="15"/>
@@ -105,6 +110,13 @@
                 <div class="feature__title"><x-icon name="printer" size="15"/> Struk premium</div>
                 <div class="muted">Cetak termal 58/80mm maupun invoice A4.</div>
             </div>
+        </div>
+
+        <div class="mt-24">
+            <span class="aldef-credit">
+                <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="">
+                Dikembangkan oleh Aldef Tech
+            </span>
         </div>
     </div>
 </div>

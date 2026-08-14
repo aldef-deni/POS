@@ -13,12 +13,20 @@ sehingga cukup di-unzip ke `public_html` pada cPanel.
 
 Setelah menjalankan seeder, gunakan akun berikut.
 
-| Peran | Masuk lewat | Username | Kata sandi | PIN |
-|---|---|---|---|---|
-| Owner | `/admin/login` | `owner` | `owner123` | 9999 |
-| Supervisor | `/admin/login` | `supervisor` | `super123` | 4321 |
-| Kasir 1 | `/pos/login` | `kasir1` | `kasir123` | 1234 |
-| Kasir 2 | `/pos/login` | `kasir2` | `kasir123` | 5678 |
+| Peran | Masuk lewat | Kredensial | PIN |
+|---|---|---|---|
+| Owner | `/admin/login` | `owner` / `owner123` | 9999 |
+| Supervisor | `/admin/login` | `supervisor` / `super123` | 4321 |
+| Kasir 1 | `/pos/login` | — (PIN saja) | **1234** |
+| Kasir 2 | `/pos/login` | — (PIN saja) | **5678** |
+
+**Terminal kasir hanya menerima PIN.** Halaman `/pos/login` menampilkan daftar
+pengguna berperan **Kasir** yang sudah memiliki PIN — cukup pilih nama, ketik
+PIN, selesai. Tidak ada login kata sandi di terminal, sehingga kata sandi
+dashboard tidak pernah diketik di meja kasir.
+
+PIN Owner dan Supervisor tetap dipakai untuk **menyetujui pembatalan
+transaksi** di terminal, bukan untuk masuk.
 
 > **Ganti seluruh kata sandi dan PIN ini sebelum dipakai sungguhan.**
 
@@ -29,7 +37,7 @@ Setelah menjalankan seeder, gunakan akun berikut.
 | URL | Untuk siapa | Keterangan |
 |---|---|---|
 | `/` | Umum | Halaman pemilihan: Terminal Kasir atau Dashboard |
-| `/pos/login` | Operator | Login kasir — **terpisah** dari dashboard |
+| `/pos/login` | Kasir | Login kasir dengan PIN — **terpisah** dari dashboard |
 | `/pos` | Operator | Terminal transaksi (wajib shift terbuka) |
 | `/admin/login` | Owner & Supervisor | Login dashboard |
 | `/dashboard` | Owner & Supervisor | Dashboard pengelola |
@@ -44,8 +52,9 @@ sesi dashboard sama sekali (dua guard terpisah: `pos` dan `web`).
 
 | Kemampuan | Owner | Supervisor | Kasir |
 |---|:--:|:--:|:--:|
-| Terminal kasir & cetak struk | ✅ | ✅ | ✅ |
-| Shift sendiri (buka/tutup laci) | ✅ | ✅ | ✅ |
+| Masuk terminal kasir (PIN) | — | — | ✅ |
+| Setujui pembatalan di kasir (PIN) | ✅ | ✅ | ❌ |
+| Shift sendiri (buka/tutup laci) | — | — | ✅ |
 | Dashboard pengelola | ✅ | ✅ | ❌ |
 | Produk, kategori, stok, opname | ✅ | ✅ | ❌ |
 | Pelanggan | ✅ | ✅ | ❌ |
@@ -60,6 +69,11 @@ sesi dashboard sama sekali (dua guard terpisah: `pos` dan `web`).
 
 Pembatalan transaksi di terminal kasir **wajib** disetujui dengan PIN Owner atau
 Supervisor — kasir tidak bisa membatalkan transaksinya sendiri.
+
+Terminal kasir sengaja hanya menampilkan pengguna berperan **Kasir**. Bila suatu
+saat Owner/Supervisor perlu ikut berjaga di meja kasir, hapus baris
+`->where('role', Role::Kasir->value)` pada `PosAuthController::show()` dan
+pastikan mereka punya PIN — sisa mekanismenya sudah siap.
 
 ---
 

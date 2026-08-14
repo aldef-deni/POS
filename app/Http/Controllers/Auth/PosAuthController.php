@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Support\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,16 +16,19 @@ use Illuminate\View\View;
 /**
  * Sign-in for the cashier terminal, on the dedicated `pos` guard.
  *
- * Two ways in: username + password, or the numeric PIN keypad for a fast
- * hand-over between shifts. Either way the resulting session grants the
- * terminal only, never the dashboard.
+ * Entry is by operator + PIN only. A keypad is quicker than a keyboard at a
+ * counter, it makes hand-over between shifts fast, and it keeps dashboard
+ * passwords off the shop floor. The resulting session grants the terminal
+ * only, never the dashboard.
  */
 class PosAuthController extends Controller
 {
     public function show(): View
     {
-        // Offer PIN sign-in only to operators who actually have one set.
+        // The till is staffed by cashiers, so only they are offered here —
+        // and only once a PIN has been set for them.
         $operators = User::where('is_active', true)
+            ->where('role', Role::Kasir->value)
             ->whereNotNull('pos_pin')
             ->orderBy('name')
             ->get(['id', 'name', 'username', 'role', 'avatar_path']);
@@ -34,9 +38,9 @@ class PosAuthController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
-        $user = $request->filled('pin')
-            ? $this->resolveByPin($request)
-            : $this->resolveByPassword($request);
+        // PIN is the only way in at the terminal: it is faster at a counter
+        // and keeps dashboard passwords off the shop floor.
+        $user = $this->resolveByPin($request);
 
         if (! $user->is_active || ! $user->hasPermission('pos.access')) {
             throw ValidationException::withMessages([
@@ -56,33 +60,14 @@ class PosAuthController extends Controller
         return redirect()->route($user->openShift() ? 'pos.index' : 'pos.shift.open');
     }
 
-    protected function resolveByPassword(Request $request): User
-    {
-        $data = $request->validate([
-            'login' => ['required', 'string', 'max:120'],
-            'password' => ['required', 'string'],
-        ]);
-
-        $field = filter_var($data['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-        $user = User::withoutGlobalScope('tenant')
-            ->where($field, $data['login'])
-            ->first();
-
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'login' => 'Username atau kata sandi tidak cocok.',
-            ]);
-        }
-
-        return $user;
-    }
-
     protected function resolveByPin(Request $request): User
     {
         $data = $request->validate([
             'user_id' => ['required', 'integer'],
             'pin' => ['required', 'string', 'min:4', 'max:8'],
+        ], [], [
+            'user_id' => 'operator',
+            'pin' => 'PIN',
         ]);
 
         $user = User::withoutGlobalScope('tenant')->find($data['user_id']);
