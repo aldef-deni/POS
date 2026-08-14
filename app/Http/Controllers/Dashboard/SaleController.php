@@ -26,7 +26,7 @@ class SaleController extends Controller
         $from = $request->date('from')?->toDateString() ?? Carbon::today()->subDays(29)->toDateString();
         $to = $request->date('to')?->toDateString() ?? Carbon::today()->toDateString();
 
-        $sales = Sale::with(['user', 'customer', 'payments'])
+        $sales = Sale::with(['user', 'customer', 'payments', 'outlet'])
             ->betweenDates($from, $to)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
             ->when($request->filled('cashier'), fn ($q) => $q->where('user_id', $request->query('cashier')))

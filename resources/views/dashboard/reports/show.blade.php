@@ -13,7 +13,11 @@
         <div>
             <h1>{{ $title }}</h1>
             <p class="muted mt-4">
-                {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
+                <span class="badge badge--{{ $outlet ? 'neutral' : 'violet' }}">
+                    <x-icon name="{{ $outlet ? 'store' : 'layers' }}" size="11"/>
+                    {{ $outlet?->name ?? 'Semua Outlet' }}
+                </span>
+                · {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
                 – {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}
                 · {{ count($rows) }} baris
             </p>

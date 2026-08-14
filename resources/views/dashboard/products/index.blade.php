@@ -68,7 +68,7 @@
                     <th class="t-right">Modal</th>
                     <th class="t-right">Harga Jual</th>
                     @allow('report.profit')<th class="t-right">Margin</th>@endallow
-                    <th class="t-right">Stok</th>
+                    <th class="t-right">Stok {{ $outlet ? '· '.$outlet->code : '(semua)' }}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -115,10 +115,13 @@
                         @endallow
                         <td class="t-right num">
                             @if ($product->track_stock)
-                                <span class="semi {{ $product->isOutOfStock() ? 'bad' : ($product->isLowStock() ? 'warn' : '') }}">
-                                    {{ qty_label($product->stock) }}
+                                @php $onHand = $product->stockAt($outlet?->id); @endphp
+                                <span class="semi {{ $product->isOutOfStockAt($outlet?->id) ? 'bad' : ($product->isLowStockAt($outlet?->id) ? 'warn' : '') }}">
+                                    {{ qty_label($onHand) }}
                                 </span>
-                                <div class="tiny subtle">min {{ qty_label($product->min_stock) }}</div>
+                                <div class="tiny subtle">
+                                    {{ $outlet ? $outlet->code : 'semua outlet' }}
+                                </div>
                             @else
                                 <span class="subtle">tidak dilacak</span>
                             @endif

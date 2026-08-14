@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shift;
 use App\Services\ReportService;
+use App\Support\OutletContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -37,12 +38,17 @@ class DashboardController extends Controller
             'categories' => $this->reports->categoryPerformance($from, $to),
             'payments' => $this->reports->paymentBreakdown($from, $to),
             'cashiers' => $this->reports->cashierPerformance($from, $to),
-            'recentSales' => Sale::with(['user', 'customer'])
+            'recentSales' => Sale::with(['user', 'customer', 'outlet'])
                 ->latest('created_at')->limit(8)->get(),
-            'lowStock' => Product::with('category')->lowStock()->active()
-                ->orderBy('stock')->limit(8)->get(),
-            'openShifts' => Shift::with('user')->open()->orderBy('opened_at')->get(),
+            'lowStock' => Product::with(['category', 'outletStocks' => fn ($q) => $q->withoutGlobalScope('outlet')])
+                ->lowStock()->active()->orderBy('name')->limit(8)->get(),
+            'openShifts' => Shift::with(['user', 'outlet'])->open()->orderBy('opened_at')->get(),
             'productCount' => Product::active()->count(),
+            // Only meaningful while looking at the whole chain; with one
+            // branch selected the figures above already say everything.
+            'outletPerformance' => app(OutletContext::class)->has()
+                ? collect()
+                : $this->reports->outletPerformance($from, $to),
         ]);
     }
 }

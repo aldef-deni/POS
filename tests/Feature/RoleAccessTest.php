@@ -179,8 +179,12 @@ class RoleAccessTest extends PosTestCase
 
     public function test_terminal_offers_owner_a_route_back_to_the_dashboard(): void
     {
+        // Working a till requires a branch, so the Owner is placed at one
+        // for this scenario — an unassigned account cannot sell at all.
+        $this->owner->update(['outlet_id' => $this->outletA->id]);
+
         $this->actingAs($this->owner, 'pos');
-        $this->openShift($this->owner);
+        $this->openShift($this->owner, $this->outletA);
 
         $this->get('/pos')
             ->assertOk()

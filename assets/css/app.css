@@ -291,6 +291,36 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
 }
 .aldef-credit img { width: 16px; height: 16px; object-fit: contain; }
 
+/* --- Outlet switcher ----------------------------------------------------
+   Which branch the dashboard is reading. Kept visually distinct from the
+   ordinary buttons because acting on the wrong outlet is costly. */
+
+.outlet-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    max-width: 210px;
+    padding: 7px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-full);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12.5px; font-weight: 600;
+    cursor: pointer;
+    transition: border-color .13s ease, background .13s ease;
+}
+.outlet-chip:hover { border-color: var(--brand-400); background: var(--brand-50); }
+
+/* An assigned operator cannot switch, so it reads as a label, not a control. */
+.outlet-chip--fixed {
+    cursor: default;
+    background: var(--bg-sunken);
+    border-style: dashed;
+}
+.outlet-chip--fixed:hover { border-color: var(--border-strong); background: var(--bg-sunken); }
+
+@media (max-width: 720px) {
+    .outlet-chip { max-width: 130px; padding: 6px 10px; font-size: 12px; }
+}
+
 .sidebar__nav { flex: 1; overflow-y: auto; padding: 14px 12px 20px; }
 
 .nav-group { margin-bottom: 18px; }

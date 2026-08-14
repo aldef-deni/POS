@@ -42,6 +42,8 @@
 
             @yield('topbar-actions')
 
+            @include('layouts.partials.outlet-switcher')
+
             <a href="{{ route('pos.index') }}" target="_blank" class="btn btn--outline btn--sm">
                 <x-icon name="scan" size="15"/>
                 <span class="hide-sm">Buka Kasir</span>

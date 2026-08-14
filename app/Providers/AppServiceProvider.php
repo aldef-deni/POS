@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\OutletContext;
 use App\Support\Tenancy;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // One tenant per request, shared by scopes, services and views.
         $this->app->singleton(Tenancy::class, fn () => new Tenancy());
+
+        // The branch the request acts on. Fixed at the terminal, selectable
+        // on the dashboard, unset meaning "all outlets".
+        $this->app->singleton(OutletContext::class, fn () => new OutletContext());
     }
 
     public function boot(): void

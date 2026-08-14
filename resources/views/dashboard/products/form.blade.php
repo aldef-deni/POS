@@ -157,13 +157,41 @@
                         </span>
                     </label>
 
+                    @unless ($product->exists)
+                        {{-- Opening stock has to land in one branch; when the
+                             dashboard is on "all outlets" there is nothing to
+                             infer, so it is asked outright. --}}
+                        <div class="field">
+                            <label class="field__label" for="opening_outlet_id">
+                                Outlet Penerima Stok Awal
+                            </label>
+                            <select id="opening_outlet_id" name="opening_outlet_id" class="select">
+                                @if ($outlet)
+                                    <option value="{{ $outlet->id }}">{{ $outlet->name }} (outlet aktif)</option>
+                                @else
+                                    <option value="">— Pilih outlet —</option>
+                                @endif
+
+                                @foreach ($outlets as $option)
+                                    @continue($outlet && $option->id === $outlet->id)
+                                    <option value="{{ $option->id }}" @selected(old('opening_outlet_id') == $option->id)>
+                                        {{ $option->name }} ({{ $option->code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span class="field__hint">
+                                Produk tampil di semua outlet; stok awal ini hanya dicatat di outlet terpilih.
+                            </span>
+                        </div>
+                    @endunless
+
                     <div class="grid grid-2" style="margin-bottom:0">
                         <div class="field" style="margin-bottom:0">
                             <label class="field__label" for="stock">
                                 {{ $product->exists ? 'Stok Saat Ini' : 'Stok Awal' }}
                             </label>
                             <input type="number" step="0.001" min="0" id="stock" name="stock" class="input"
-                                   value="{{ old('stock', $product->exists ? (float) $product->stock : 0) }}"
+                                   value="{{ old('stock', $product->exists ? (float) $product->stockAt($outlet?->id) : 0) }}"
                                    @disabled($product->exists)>
                             <span class="field__hint">
                                 @if ($product->exists)

@@ -37,6 +37,18 @@ class AuthenticatePos
                 ->with('error', 'Akun ini tidak diizinkan mengoperasikan kasir.');
         }
 
+        // Selling without a branch would leave the sale and its stock
+        // movement unattributed, so the terminal refuses to open.
+        if (! $user->outlet_id) {
+            auth('pos')->logout();
+
+            return redirect()->route('pos.login')->with(
+                'error',
+                "Akun {$user->name} belum ditempatkan pada outlet mana pun. "
+                    .'Minta Owner menetapkan outlet melalui Dashboard → Pengguna & Peran.'
+            );
+        }
+
         return $next($request);
     }
 }

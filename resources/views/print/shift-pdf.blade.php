@@ -56,7 +56,10 @@
         <td style="text-align:right;vertical-align:top">
             <div class="doc-label">Laporan Tutup Shift</div>
             <div class="doc-no">Shift #{{ $shift->id }}</div>
-            <div class="brand-sub">{{ $shift->opened_at->translatedFormat('d F Y') }}</div>
+            <div class="brand-sub">
+                <b>{{ $shift->outlet?->name ?? '—' }}</b><br>
+                {{ $shift->opened_at->translatedFormat('d F Y') }}
+            </div>
         </td>
     </tr>
 </table>

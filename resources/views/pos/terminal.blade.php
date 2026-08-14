@@ -30,8 +30,13 @@
                 <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt="Aldef Tech" width="32" height="32" decoding="async">
             </div>
             <div style="min-width:0">
-                <div class="pos-top__name truncate">{{ $tenant?->name }}</div>
-                <div class="pos-top__meta">{{ $cashier->name }} · {{ $cashier->role->label() }}</div>
+                {{-- The branch, not the business, is what the cashier needs
+                     to see: every sale and stock move lands here. --}}
+                <div class="pos-top__name truncate">{{ $outlet?->name ?? $tenant?->name }}</div>
+                <div class="pos-top__meta truncate">
+                    {{ $cashier->name }} · {{ $cashier->role->label() }}
+                    @if ($outlet) · <span class="mono">{{ $outlet->code }}</span> @endif
+                </div>
             </div>
         </div>
 

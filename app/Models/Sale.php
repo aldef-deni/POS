@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,10 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sale extends Model
 {
-    use BelongsToTenant;
+    use BelongsToOutlet, BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'invoice_number', 'shift_id', 'user_id', 'customer_id',
+        'tenant_id', 'outlet_id', 'invoice_number', 'shift_id', 'user_id', 'customer_id',
         'subtotal', 'discount_type', 'discount_value', 'discount_amount',
         'tax_percent', 'tax_amount', 'service_charge_amount', 'rounding_amount',
         'total', 'paid_amount', 'change_amount', 'item_count', 'total_qty',

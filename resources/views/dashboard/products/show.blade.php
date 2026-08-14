@@ -61,11 +61,17 @@
         </div>
     @endallow
     <div class="stat">
-        <div class="stat__label">Stok Saat Ini</div>
-        <div class="stat__value {{ $product->isOutOfStock() ? 'bad' : ($product->isLowStock() ? 'warn' : '') }}">
-            {{ $product->track_stock ? qty_label($product->stock) . ' ' . $product->unit : '∞' }}
+        <div class="stat__label">Stok {{ $outlet ? $outlet->code : 'Semua Outlet' }}</div>
+        <div class="stat__value {{ $product->isOutOfStockAt($outlet?->id) ? 'bad' : ($product->isLowStockAt($outlet?->id) ? 'warn' : '') }}">
+            {{ $product->track_stock ? qty_label($product->stockAt($outlet?->id)) . ' ' . $product->unit : '∞' }}
         </div>
-        <div class="stat__meta">Minimum {{ qty_label($product->min_stock) }} {{ $product->unit }}</div>
+        <div class="stat__meta">
+            @if ($outlet)
+                Total seluruh outlet {{ qty_label($product->stock) }} {{ $product->unit }}
+            @else
+                Minimum {{ qty_label($product->min_stock) }} {{ $product->unit }}
+            @endif
+        </div>
     </div>
     <div class="stat">
         <div class="stat__label">Terjual</div>
@@ -108,12 +114,78 @@
         </div>
     </div>
 
+    <div class="stack g-16">
+
+    {{-- Stock held by each branch --}}
+    <div class="card">
+        <div class="card__head">
+            <div>
+                <div class="card__title">Stok per Outlet</div>
+                <div class="card__sub">Setiap cabang memegang stoknya sendiri</div>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="table table--compact">
+                <thead>
+                    <tr>
+                        <th>Outlet</th><th class="t-right">Stok</th>
+                        <th class="t-right">Minimum</th><th class="t-right">Nilai Modal</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($branchStocks as $row)
+                        <tr>
+                            <td>
+                                <div class="row g-8">
+                                    <span class="code-chip">{{ $row->outlet?->code ?? '—' }}</span>
+                                    <span class="semi small">{{ $row->outlet?->name ?? 'Outlet dihapus' }}</span>
+                                </div>
+                            </td>
+                            <td class="t-right num semi {{ $row->isOut() ? 'bad' : ($row->isLow() ? 'warn' : '') }}">
+                                {{ qty_label($row->stock) }} {{ $product->unit }}
+                            </td>
+                            <td class="t-right num subtle">{{ qty_label($row->min_stock) }}</td>
+                            <td class="t-right num muted">{{ money((float) $row->stock * (float) $product->cost_price) }}</td>
+                            <td>
+                                <span class="badge badge--{{ $row->isOut() ? 'bad' : ($row->isLow() ? 'warn' : 'ok') }}">
+                                    {{ $row->isOut() ? 'Habis' : ($row->isLow() ? 'Menipis' : 'Aman') }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5">
+                            <div class="empty">
+                                <div class="empty__title">Belum ada stok di outlet mana pun</div>
+                                <div class="empty__text">Tambahkan melalui menu Stok &amp; Inventori.</div>
+                            </div>
+                        </td></tr>
+                    @endforelse
+                </tbody>
+                @if ($branchStocks->isNotEmpty())
+                    <tfoot>
+                        <tr>
+                            <td>Total seluruh outlet</td>
+                            <td class="t-right num">{{ qty_label($branchStocks->sum('stock')) }} {{ $product->unit }}</td>
+                            <td></td>
+                            <td class="t-right num">
+                                {{ money($branchStocks->sum('stock') * (float) $product->cost_price) }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
+
     {{-- Stock ledger --}}
     <div class="card">
         <div class="card__head">
             <div>
                 <div class="card__title">Riwayat Pergerakan Stok</div>
-                <div class="card__sub">20 pergerakan terakhir</div>
+                <div class="card__sub">
+                    20 pergerakan terakhir{{ $outlet ? ' · '.$outlet->name : ' · semua outlet' }}
+                </div>
             </div>
             @allow('stock.view')
                 <a href="{{ route('admin.stock.index', ['product' => $product->id]) }}" class="btn btn--ghost btn--sm">
@@ -125,7 +197,7 @@
             <table class="table table--compact">
                 <thead>
                     <tr>
-                        <th>Waktu</th><th>Jenis</th><th class="t-right">Perubahan</th>
+                        <th>Waktu</th><th>Outlet</th><th>Jenis</th><th class="t-right">Perubahan</th>
                         <th class="t-right">Saldo</th><th>Oleh</th>
                     </tr>
                 </thead>
@@ -133,6 +205,7 @@
                     @forelse ($movements as $movement)
                         <tr>
                             <td class="small muted nowrap">{{ $movement->created_at->format('d/m/y H:i') }}</td>
+                            <td><span class="code-chip">{{ $movement->outlet?->code ?? '—' }}</span></td>
                             <td><span class="badge badge--neutral">{{ $movement->typeLabel() }}</span></td>
                             <td class="t-right num semi {{ (float) $movement->qty >= 0 ? 'ok' : 'bad' }}">
                                 {{ (float) $movement->qty >= 0 ? '+' : '' }}{{ qty_label($movement->qty) }}
@@ -141,11 +214,13 @@
                             <td class="small muted">{{ $movement->user?->name ?? 'Sistem' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5"><div class="empty"><div class="empty__title">Belum ada pergerakan stok</div></div></td></tr>
+                        <tr><td colspan="6"><div class="empty"><div class="empty__title">Belum ada pergerakan stok</div></div></td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+    </div>
+
     </div>
 </div>
 

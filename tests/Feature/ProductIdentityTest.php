@@ -110,6 +110,9 @@ class ProductIdentityTest extends PosTestCase
             'cost_price' => 5000,
             'price' => 12000,
             'stock' => 40,
+            // Stock is held per branch, so the opening quantity needs a
+            // destination outlet — the Owner here oversees all of them.
+            'opening_outlet_id' => $this->outletA->id,
             'min_stock' => 5,
             'track_stock' => '1',
             'is_active' => '1',

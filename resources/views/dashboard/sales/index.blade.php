@@ -51,7 +51,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Invoice</th><th>Waktu</th><th>Kasir</th><th>Pelanggan</th>
+                    <th>Invoice</th><th>Outlet</th><th>Waktu</th><th>Kasir</th><th>Pelanggan</th>
                     <th class="t-right">Item</th><th>Pembayaran</th>
                     <th class="t-right">Diskon</th><th class="t-right">Total</th>
                     <th>Status</th><th></th>
@@ -63,6 +63,7 @@
                         <td>
                             <a href="{{ route('admin.sales.show', $sale) }}" class="mono semi">{{ $sale->invoice_number }}</a>
                         </td>
+                        <td><span class="code-chip">{{ $sale->outlet?->code ?? '—' }}</span></td>
                         <td class="small muted nowrap">{{ $sale->created_at->format('d/m/y H:i') }}</td>
                         <td class="small">{{ $sale->user?->name ?? '—' }}</td>
                         <td class="small muted">{{ $sale->customer?->name ?? 'Umum' }}</td>
@@ -99,7 +100,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10">
+                    <tr><td colspan="11">
                         <div class="empty">
                             <div class="empty__icon"><x-icon name="receipt" size="24"/></div>
                             <div class="empty__title">Tidak ada transaksi</div>

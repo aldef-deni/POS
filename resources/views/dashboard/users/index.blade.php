@@ -55,7 +55,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Nama</th><th>Username</th><th>Email</th><th>Peran</th>
+                    <th>Nama</th><th>Username</th><th>Outlet</th><th>Peran</th>
                     <th>PIN Kasir</th><th>Status</th><th>Terakhir Masuk</th><th></th>
                 </tr>
             </thead>
@@ -75,8 +75,26 @@
                                 </div>
                             </div>
                         </td>
-                        <td><span class="code-chip">{{ $user->username }}</span></td>
-                        <td class="small muted">{{ $user->email }}</td>
+                        <td>
+                            <span class="code-chip">{{ $user->username }}</span>
+                            <div class="tiny subtle mt-4">{{ $user->email }}</div>
+                        </td>
+                        <td>
+                            @if ($user->outlet)
+                                <span class="badge badge--neutral">
+                                    <x-icon name="store" size="11"/> {{ $user->outlet->name }}
+                                </span>
+                            @elseif ($user->isOwner())
+                                <span class="badge badge--violet">
+                                    <x-icon name="layers" size="11"/> Semua Outlet
+                                </span>
+                            @else
+                                {{-- A non-Owner with no branch cannot work; make it loud. --}}
+                                <span class="badge badge--bad">
+                                    <x-icon name="alert" size="11"/> Belum ditempatkan
+                                </span>
+                            @endif
+                        </td>
                         <td><span class="badge badge--{{ $user->role->badgeColor() }}">{{ $user->role->label() }}</span></td>
                         <td>
                             @if ($user->pos_pin)

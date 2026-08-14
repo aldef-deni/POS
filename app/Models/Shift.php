@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,10 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Shift extends Model
 {
-    use BelongsToTenant;
+    use BelongsToOutlet, BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'user_id', 'opened_at', 'closed_at',
+        'tenant_id', 'outlet_id', 'user_id', 'opened_at', 'closed_at',
         'opening_cash', 'cash_sales', 'non_cash_sales', 'expected_cash',
         'counted_cash', 'cash_variance', 'total_sales', 'total_transactions',
         'total_refunds', 'status', 'opening_note', 'closing_note', 'closed_by',

@@ -13,12 +13,13 @@ sehingga cukup di-unzip ke `public_html` pada cPanel.
 
 Setelah menjalankan seeder, gunakan akun berikut.
 
-| Peran | Masuk lewat | Kredensial | PIN |
-|---|---|---|---|
-| Owner | `/admin/login` | `owner` / `owner123` | 9999 |
-| Supervisor | `/admin/login` | `supervisor` / `super123` | 4321 |
-| Kasir 1 | `/pos/login` | — (PIN saja) | **1234** |
-| Kasir 2 | `/pos/login` | — (PIN saja) | **5678** |
+| Peran | Masuk lewat | Kredensial | PIN | Outlet |
+|---|---|---|---|---|
+| Owner | `/admin/login` | `owner` / `owner123` | 9999 | Semua outlet |
+| Supervisor | `/admin/login` | `supervisor` / `super123` | 4321 | Cikini |
+| Budi Santoso | `/pos/login` | — (PIN saja) | **1234** | Cikini |
+| Siti Aminah | `/pos/login` | — (PIN saja) | **5678** | Kemang |
+| Dewi Anggraini | `/pos/login` | — (PIN saja) | **2468** | BSD |
 
 **Terminal kasir hanya menerima PIN.** Halaman `/pos/login` menampilkan daftar
 pengguna berperan **Kasir** yang sudah memiliki PIN — cukup pilih nama, ketik
@@ -52,6 +53,8 @@ sesi dashboard sama sekali (dua guard terpisah: `pos` dan `web`).
 
 | Kemampuan | Owner | Supervisor | Kasir |
 |---|:--:|:--:|:--:|
+| Kelola outlet / cabang | ✅ | ❌ | ❌ |
+| Berpindah antar outlet | ✅ | ❌ (terkunci) | ❌ |
 | Masuk terminal kasir (PIN) | — | — | ✅ |
 | Setujui pembatalan di kasir (PIN) | ✅ | ✅ | ❌ |
 | Shift sendiri (buka/tutup laci) | — | — | ✅ |
@@ -77,7 +80,62 @@ pastikan mereka punya PIN — sisa mekanismenya sudah siap.
 
 ---
 
-## 4. Mekanisme ID Produk
+## 4. Multi Outlet / Cabang
+
+Satu toko dapat memiliki banyak cabang. Yang **dibagi bersama** adalah katalog
+produk, harga, kategori, pelanggan, dan pengaturan toko. Yang **terpisah per
+outlet** adalah:
+
+**stok · staf · shift & laci kas · transaksi · nomor invoice · laporan**
+
+### Penempatan operator wajib
+
+Saat menambah atau mengubah pengguna, kolom **Outlet Penempatan** wajib diisi
+dan tidak punya nilai bawaan — operator harus dipilih secara sadar, bukan
+karena dropdown kebetulan berhenti di pilihan pertama. Aturannya:
+
+- **Kasir & Supervisor** wajib satu outlet. Pilihan "Semua Outlet" ditolak
+  server, bukan hanya disembunyikan di tampilan.
+- **Owner** boleh "Semua Outlet", dan itupun harus dipilih eksplisit.
+- Kasir tanpa outlet **tidak bisa membuka terminal** sama sekali.
+- Operator **tidak bisa dipindah saat shift masih terbuka** — kalau tidak,
+  setoran kasnya akan terbelah di dua cabang.
+
+### Stok per outlet
+
+Stok disimpan di tabel `outlet_stocks` (satu baris per produk per outlet).
+Terminal kasir hanya menampilkan dan hanya boleh menjual stok cabangnya
+sendiri; menjual barang yang stoknya ada di cabang lain akan ditolak.
+
+Penyesuaian stok dan stok opname juga per outlet — tombolnya nonaktif bila
+tampilan sedang "Semua Outlet", karena stok harus punya tujuan yang jelas.
+
+### Nomor invoice memuat kode outlet
+
+```
+INV-CKN-260814-0001     ← Cikini
+INV-KMG-260814-0001     ← Kemang
+```
+
+Dua cabang yang bertransaksi bersamaan tidak akan pernah menghasilkan nomor
+yang sama, dan struk langsung menunjukkan asal cabangnya.
+
+### Filter laporan
+
+Pemilih outlet di kanan atas dashboard mengatur **seluruh** halaman sekaligus —
+dashboard, penjualan, stok, shift, dan kesepuluh laporan. Pilih satu outlet
+untuk memfilter, atau **Semua Outlet** untuk melihat gabungan seluruh cabang.
+
+Pengguna yang ditugaskan pada satu outlet melihat pemilih itu sebagai label
+terkunci; ia tidak dapat melihat data cabang lain, bahkan dengan mengubah URL.
+
+Saat "Semua Outlet" aktif, dashboard menampilkan **perbandingan performa antar
+cabang**, dan halaman Outlet & Cabang memuat tabel omzet, laba, nilai stok,
+serta kontribusi tiap cabang.
+
+---
+
+## 5. Mekanisme ID Produk
 
 Diatur di **Dashboard → Pengaturan → Mekanisme ID Produk**. ID dibentuk dari
 empat segmen yang bisa dinyalakan/dimatikan:
@@ -105,7 +163,7 @@ mencetak salinan lebih banyak: `/dashboard/products/labels?copies=12`.
 
 ---
 
-## 5. Laporan
+## 6. Laporan
 
 Sepuluh laporan, semuanya dengan rentang tanggal bebas dan tombol **Export PDF**
 serta **CSV**:
@@ -119,7 +177,7 @@ Selain itu tersedia: **Invoice PDF** per transaksi dan **Laporan Tutup Shift PDF
 
 ---
 
-## 6. Deploy ke cPanel
+## 7. Deploy ke cPanel
 
 Aplikasi ini **tidak memakai folder `public`**. Seluruh isi ZIP langsung
 diletakkan di `public_html` (atau folder domain/subdomain Anda).
@@ -174,7 +232,7 @@ sebagai PHP (`uploads/.htaccess`).
 
 ---
 
-## 7. Menjalankan di Lokal
+## 8. Menjalankan di Lokal
 
 ```bash
 composer install
@@ -202,7 +260,7 @@ pembatalan transaksi, pembuatan ID/barcode/QR, dan ekspor laporan.
 
 ---
 
-## 8. Pintasan Keyboard di Terminal Kasir
+## 9. Pintasan Keyboard di Terminal Kasir
 
 | Tombol | Fungsi |
 |---|---|
@@ -217,7 +275,7 @@ Kolom pindai selalu merebut fokus kembali, sehingga scanner barcode
 
 ---
 
-## 9. Struktur Penting
+## 10. Struktur Penting
 
 ```
 index.php              front controller (dokumen root)
@@ -233,7 +291,7 @@ resources/views/print/ struk termal, invoice PDF, laporan PDF
 
 ---
 
-## 10. Catatan Teknis
+## 11. Catatan Teknis
 
 - **Perhitungan harga selalu dihitung ulang di server.** Nominal yang dikirim
   browser hanya untuk tampilan; harga diambil dari database saat checkout.

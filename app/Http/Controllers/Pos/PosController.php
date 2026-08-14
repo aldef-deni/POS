@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\HeldOrder;
 use App\Models\Product;
 use App\Models\SalePayment;
+use App\Support\OutletContext;
 use App\Support\Tenancy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class PosController extends Controller
             'tenant' => $tenant,
             'cashier' => $cashier,
             'shift' => $shift,
+            'outlet' => app(OutletContext::class)->get(),
             'categories' => Category::active()->orderBy('sort_order')->orderBy('name')->get(),
             'products' => $this->catalogue(),
             'paymentMethods' => SalePayment::methods(),
@@ -107,7 +109,15 @@ class PosController extends Controller
     /** @return array<int,array<string,mixed>> */
     protected function catalogue(?string $term = null, $categoryId = null): array
     {
-        return Product::with('category')
+        // Stock shown at the till is this outlet's shelf, never the chain
+        // total — otherwise a cashier would be offered goods held elsewhere.
+        $outletId = app(OutletContext::class)->id();
+
+        return Product::with([
+            'category',
+            'outletStocks' => fn ($q) => $q->withoutGlobalScope('outlet')
+                ->where('outlet_id', $outletId),
+        ])
             ->active()
             ->search($term)
             ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
@@ -130,7 +140,7 @@ class PosController extends Controller
             'price' => (float) $product->price,
             'wholesale_price' => $product->wholesale_price !== null ? (float) $product->wholesale_price : null,
             'min_wholesale_qty' => (int) $product->min_wholesale_qty,
-            'stock' => (float) $product->stock,
+            'stock' => $product->stockAt(app(OutletContext::class)->id()),
             'track_stock' => (bool) $product->track_stock,
             'tax_exempt' => (bool) $product->tax_exempt,
             'category_id' => $product->category_id,

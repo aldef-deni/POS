@@ -29,7 +29,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Kasir</th><th>Buka</th><th>Tutup</th><th>Durasi</th>
+                    <th>Kasir</th><th>Outlet</th><th>Buka</th><th>Tutup</th><th>Durasi</th>
                     <th class="t-right">Trx</th><th class="t-right">Modal Awal</th>
                     <th class="t-right">Tunai</th><th class="t-right">Non-Tunai</th>
                     <th class="t-right">Selisih Kas</th><th></th>
@@ -53,6 +53,7 @@
                                 </div>
                             </div>
                         </td>
+                        <td><span class="code-chip">{{ $shift->outlet?->code ?? '—' }}</span></td>
                         <td class="small muted nowrap">{{ $shift->opened_at->format('d/m/y H:i') }}</td>
                         <td class="small muted nowrap">{{ $shift->closed_at?->format('d/m/y H:i') ?? '—' }}</td>
                         <td class="small muted">{{ $shift->durationLabel() }}</td>
@@ -78,7 +79,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10">
+                    <tr><td colspan="11">
                         <div class="empty">
                             <div class="empty__icon"><x-icon name="clock" size="24"/></div>
                             <div class="empty__title">Belum ada shift</div>

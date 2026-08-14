@@ -51,6 +51,59 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    /**
+     * Per-branch stock rows. `products.stock` is only a cached total across
+     * these — this relation is the authoritative figure.
+     */
+    public function outletStocks(): HasMany
+    {
+        return $this->hasMany(OutletStock::class);
+    }
+
+    /** Stock held by one branch, 0 when the branch has never carried it. */
+    public function stockAt(int|Outlet|null $outlet): float
+    {
+        $outletId = $outlet instanceof Outlet ? $outlet->id : $outlet;
+
+        if (! $outletId) {
+            return (float) $this->stock;
+        }
+
+        // Uses the already-loaded relation when the caller eager-loaded it,
+        // so a product grid does not fire a query per row.
+        if ($this->relationLoaded('outletStocks')) {
+            $row = $this->outletStocks->firstWhere('outlet_id', $outletId);
+
+            return $row ? (float) $row->stock : 0.0;
+        }
+
+        return (float) ($this->outletStocks()
+            ->withoutGlobalScope('outlet')
+            ->where('outlet_id', $outletId)
+            ->value('stock') ?? 0);
+    }
+
+    /** Reorder point for one branch, falling back to the product default. */
+    public function minStockAt(int|Outlet|null $outlet): float
+    {
+        $outletId = $outlet instanceof Outlet ? $outlet->id : $outlet;
+
+        if (! $outletId) {
+            return (float) $this->min_stock;
+        }
+
+        if ($this->relationLoaded('outletStocks')) {
+            $row = $this->outletStocks->firstWhere('outlet_id', $outletId);
+
+            return $row ? (float) $row->min_stock : (float) $this->min_stock;
+        }
+
+        return (float) ($this->outletStocks()
+            ->withoutGlobalScope('outlet')
+            ->where('outlet_id', $outletId)
+            ->value('min_stock') ?? $this->min_stock);
+    }
+
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
@@ -61,11 +114,27 @@ class Product extends Model
         return $query->where('is_active', true);
     }
 
-    /** Products at or below their reorder point. */
+    /**
+     * Products at or below their reorder point.
+     *
+     * With a branch selected this compares that branch's shelf; with "all
+     * outlets" it compares the chain-wide total, because a product can be
+     * comfortable overall while one outlet has run dry.
+     */
     public function scopeLowStock(Builder $query): Builder
     {
-        return $query->where('track_stock', true)
-            ->whereColumn('stock', '<=', 'min_stock');
+        $outletId = app(\App\Support\OutletContext::class)->id();
+
+        $query->where('track_stock', true);
+
+        if (! $outletId) {
+            return $query->whereColumn('stock', '<=', 'min_stock');
+        }
+
+        return $query->whereHas('outletStocks', fn ($q) => $q
+            ->withoutGlobalScope('outlet')
+            ->where('outlet_id', $outletId)
+            ->whereColumn('stock', '<=', 'min_stock'));
     }
 
     /** Free-text lookup used by the terminal search box. */
@@ -116,11 +185,26 @@ class Product extends Model
 
     public function isLowStock(): bool
     {
-        return $this->track_stock && (float) $this->stock <= (float) $this->min_stock;
+        return $this->isLowStockAt(app(\App\Support\OutletContext::class)->id());
     }
 
     public function isOutOfStock(): bool
     {
-        return $this->track_stock && (float) $this->stock <= 0;
+        return $this->isOutOfStockAt(app(\App\Support\OutletContext::class)->id());
+    }
+
+    /** Low on the given branch's shelf, or chain-wide when null. */
+    public function isLowStockAt(int|Outlet|null $outlet): bool
+    {
+        if (! $this->track_stock) {
+            return false;
+        }
+
+        return $this->stockAt($outlet) <= $this->minStockAt($outlet);
+    }
+
+    public function isOutOfStockAt(int|Outlet|null $outlet): bool
+    {
+        return $this->track_stock && $this->stockAt($outlet) <= 0;
     }
 }

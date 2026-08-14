@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ActivityLog;
 use App\Models\Customer;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -171,7 +172,17 @@ class CheckoutService
             ]);
         }
 
-        $this->assertStockAvailable($tenant, $lines);
+        // The sale belongs to the branch whose drawer is open, never to
+        // whatever outlet happens to be selected elsewhere in the session.
+        $outletId = $shift->outlet_id ?? $cashier->outlet_id;
+
+        if (! $outletId) {
+            throw ValidationException::withMessages([
+                'items' => 'Shift ini tidak terkait outlet mana pun. Hubungi Owner.',
+            ]);
+        }
+
+        $this->assertStockAvailable($tenant, $lines, $outletId);
 
         $payments = $this->normalisePayments($payload['payments'] ?? []);
         $paid = round(array_sum(array_column($payments, 'amount')), 2);
@@ -192,11 +203,12 @@ class CheckoutService
         $change = max(0, $change);
 
         return DB::transaction(function () use (
-            $tenant, $cashier, $shift, $payload, $lines, $totals, $payments, $paid, $change
+            $tenant, $cashier, $shift, $payload, $lines, $totals, $payments, $paid, $change, $outletId
         ) {
             $sale = Sale::create([
                 'tenant_id' => $tenant->id,
-                'invoice_number' => $this->nextInvoiceNumber($tenant),
+                'outlet_id' => $outletId,
+                'invoice_number' => $this->nextInvoiceNumber($tenant, $outletId),
                 'shift_id' => $shift->id,
                 'user_id' => $cashier->id,
                 'customer_id' => $payload['customer_id'] ?? null,
@@ -245,6 +257,7 @@ class CheckoutService
                     $sale,
                     'Penjualan '.$sale->invoice_number,
                     $cashier->id,
+                    $outletId,
                 );
 
                 $product->increment('sold_count', (int) round($line['qty']));
@@ -281,6 +294,8 @@ class CheckoutService
         return DB::transaction(function () use ($sale, $approver, $reason) {
             foreach ($sale->items as $item) {
                 if ($item->product) {
+                    // Stock goes back to the branch that sold it, not to
+                    // whichever outlet the approver happens to be viewing.
                     $this->stock->apply(
                         $item->product,
                         (float) $item->qty,
@@ -288,6 +303,7 @@ class CheckoutService
                         $sale,
                         'Void '.$sale->invoice_number,
                         $approver->id,
+                        $sale->outlet_id,
                     );
                 }
             }
@@ -324,8 +340,13 @@ class CheckoutService
         });
     }
 
-    /** Reject the sale before it starts if any line would oversell. */
-    protected function assertStockAvailable(Tenant $tenant, array $lines): void
+    /**
+     * Reject the sale before it starts if any line would oversell.
+     *
+     * The comparison is against this branch's own stock, not the chain-wide
+     * total — otherwise one outlet could sell what another outlet holds.
+     */
+    protected function assertStockAvailable(Tenant $tenant, array $lines, int $outletId): void
     {
         if ($tenant->allow_negative_stock) {
             return;
@@ -335,10 +356,16 @@ class CheckoutService
             /** @var Product $product */
             $product = $line['product'];
 
-            if ($product->track_stock && (float) $product->stock < $line['qty']) {
+            if (! $product->track_stock) {
+                continue;
+            }
+
+            $available = $product->stockAt($outletId);
+
+            if ($available < $line['qty']) {
                 throw ValidationException::withMessages([
-                    'items' => "Stok {$product->name} tidak mencukupi (tersisa "
-                        .rtrim(rtrim(number_format((float) $product->stock, 3, ',', '.'), '0'), ',')
+                    'items' => "Stok {$product->name} di outlet ini tidak mencukupi (tersisa "
+                        .rtrim(rtrim(number_format($available, 3, ',', '.'), '0'), ',')
                         ." {$product->unit}).",
                 ]);
             }
@@ -378,18 +405,21 @@ class CheckoutService
     }
 
     /**
-     * Per-tenant, per-day running invoice number: INV-260814-0001.
+     * Per-branch, per-day running invoice number: INV-PST-260814-0001.
      *
-     * Called inside the checkout transaction; the tenant row lock serialises
-     * concurrent tills so two receipts cannot share a number.
+     * The outlet code is part of the number so two branches selling at the
+     * same moment produce visibly different invoices, and so a receipt says
+     * where it came from. The tenant row lock serialises concurrent tills.
      */
-    protected function nextInvoiceNumber(Tenant $tenant): string
+    protected function nextInvoiceNumber(Tenant $tenant, int $outletId): string
     {
         Tenant::whereKey($tenant->id)->lockForUpdate()->first();
 
-        $prefix = 'INV-'.Carbon::now()->format('ymd').'-';
+        $code = Outlet::withoutGlobalScopes()->whereKey($outletId)->value('code') ?: 'OUT';
 
-        $last = Sale::withoutGlobalScope('tenant')
+        $prefix = 'INV-'.strtoupper($code).'-'.Carbon::now()->format('ymd').'-';
+
+        $last = Sale::withoutGlobalScopes()
             ->where('tenant_id', $tenant->id)
             ->where('invoice_number', 'like', $prefix.'%')
             ->orderByDesc('invoice_number')

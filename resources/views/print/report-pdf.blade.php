@@ -93,6 +93,9 @@
             <td style="vertical-align:top;text-align:right">
                 <div class="doc-title">{{ $title }}</div>
                 <div class="doc-meta">
+                    {{-- Says plainly which branch the figures cover, so a
+                         printed report can never be misread as chain-wide. --}}
+                    <b>{{ outlet_label() }}</b><br>
                     Periode {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
                     – {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}
                 </div>
@@ -107,7 +110,7 @@
         <tr>
             <td>
                 Dicetak {{ $generatedAt->translatedFormat('d F Y H:i') }} oleh {{ $generatedBy }}
-                · {{ $tenant?->name }}
+                · {{ $tenant?->name }} · {{ outlet_label() }}
             </td>
             <td style="text-align:right">
                 Halaman <span class="pagenum"></span> / <span class="pagetotal"></span>

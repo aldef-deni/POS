@@ -68,6 +68,10 @@
             letter-spacing: .06em; text-transform: uppercase;
             line-height: 1.2;
         }
+        .branch-name {
+            font-size: 10.5px; font-weight: 700;
+            letter-spacing: .04em; margin-top: .8mm;
+        }
         .store-meta { font-size: 9px; color: #444; margin-top: 1mm; line-height: 1.4; }
 
         .rule       { border-top: 1px dashed #999; margin: 2.5mm 0; }
@@ -165,10 +169,24 @@
 
         <div class="store-name">{{ $tenant?->name ?? config('app.name') }}</div>
 
+        {{-- The branch that actually served the customer, with its own
+             address and phone so a return goes to the right place. --}}
+        @php $branch = $sale->outlet; @endphp
+
+        @if ($branch)
+            <div class="branch-name">{{ $branch->name }}</div>
+        @endif
+
         <div class="store-meta">
-            @if ($tenant?->address){{ $tenant->address }}@endif
-            @if ($tenant?->city)<br>{{ $tenant->city }}@endif
-            @if ($tenant?->phone)<br>Telp. {{ $tenant->phone }}@endif
+            @php
+                $address = $branch?->printableAddress() ?? $tenant?->address;
+                $city = $branch?->city ?? $tenant?->city;
+                $phone = $branch?->printablePhone() ?? $tenant?->phone;
+            @endphp
+
+            @if ($address){{ $address }}@endif
+            @if ($city)<br>{{ $city }}@endif
+            @if ($phone)<br>Telp. {{ $phone }}@endif
             @if ($tenant?->tax_number)<br>NPWP {{ $tenant->tax_number }}@endif
         </div>
     </div>
@@ -290,8 +308,10 @@
             <div class="thanks">{{ $tenant->receipt_header }}</div>
         @endif
 
-        @if ($tenant?->receipt_footer)
-            <div class="footer-note">{{ $tenant->receipt_footer }}</div>
+        @php $footer = $sale->outlet?->printableFooter() ?? $tenant?->receipt_footer; @endphp
+
+        @if ($footer)
+            <div class="footer-note">{{ $footer }}</div>
         @endif
 
         <div style="font-size:8px;color:#888;margin-top:3mm">

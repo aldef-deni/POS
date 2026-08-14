@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovement extends Model
 {
-    use BelongsToTenant;
+    use BelongsToOutlet, BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'product_id', 'user_id', 'type', 'qty',
+        'tenant_id', 'outlet_id', 'product_id', 'user_id', 'type', 'qty',
         'stock_before', 'stock_after', 'unit_cost',
         'reference_type', 'reference_id', 'note',
     ];

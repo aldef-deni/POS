@@ -26,8 +26,15 @@
     <div>
         <h1>Pusat Laporan</h1>
         <p class="muted mt-4">
-            Periode {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
+            <span class="badge badge--{{ $outlet ? 'neutral' : 'violet' }}">
+                <x-icon name="{{ $outlet ? 'store' : 'layers' }}" size="11"/>
+                {{ $outlet?->name ?? 'Semua Outlet' }}
+            </span>
+            · Periode {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
             – {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}
+        </p>
+        <p class="tiny subtle mt-4">
+            Ganti outlet lewat pemilih di bagian atas untuk memfilter seluruh laporan.
         </p>
     </div>
 

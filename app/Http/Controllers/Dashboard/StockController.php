@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\StockService;
+use App\Support\OutletContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,7 +21,7 @@ class StockController extends Controller
 
     public function index(Request $request): View
     {
-        $movements = StockMovement::with(['product', 'user'])
+        $movements = StockMovement::with(['product', 'user', 'outlet'])
             ->when($request->filled('product'), fn ($q) => $q->where('product_id', $request->query('product')))
             ->when($request->filled('type'), fn ($q) => $q->where('type', $request->query('type')))
             ->latest()
@@ -30,9 +31,11 @@ class StockController extends Controller
         return view('dashboard.stock.index', [
             'movements' => $movements,
             'products' => Product::active()->where('track_stock', true)->orderBy('name')->get(),
-            'lowStock' => Product::with('category')->lowStock()->active()->orderBy('stock')->get(),
+            'lowStock' => Product::with(['category', 'outletStocks' => fn ($q) => $q->withoutGlobalScope('outlet')])
+                ->lowStock()->active()->orderBy('name')->get(),
             'types' => StockMovement::types(),
             'filters' => $request->only(['product', 'type']),
+            'activeOutlet' => app(OutletContext::class)->get(),
         ]);
     }
 
@@ -50,10 +53,21 @@ class StockController extends Controller
 
         $product = Product::findOrFail($data['product_id']);
 
-        $signed = $data['direction'] === 'in' ? (float) $data['qty'] : -(float) $data['qty'];
+        // Stock always belongs to a branch; adjusting while viewing "all
+        // outlets" would have no defensible destination.
+        $outletId = app(OutletContext::class)->id();
 
-        if ($data['direction'] === 'out' && (float) $product->stock < (float) $data['qty']) {
-            return back()->with('error', "Stok {$product->name} tidak mencukupi untuk dikeluarkan.");
+        if (! $outletId) {
+            return back()->with('error',
+                'Pilih outlet terlebih dahulu pada pemilih di bagian atas sebelum menyesuaikan stok.');
+        }
+
+        $signed = $data['direction'] === 'in' ? (float) $data['qty'] : -(float) $data['qty'];
+        $available = $product->stockAt($outletId);
+
+        if ($data['direction'] === 'out' && $available < (float) $data['qty']) {
+            return back()->with('error',
+                "Stok {$product->name} di outlet ini hanya ".qty_label($available)." {$product->unit}.");
         }
 
         $this->stock->apply(
@@ -63,28 +77,36 @@ class StockController extends Controller
             null,
             $data['note'] ?? null,
             $request->user()->id,
+            $outletId,
         );
+
+        $outletName = app(OutletContext::class)->name();
 
         ActivityLog::record(
             'stock.adjust',
-            "Penyesuaian stok {$product->name}: ".($signed > 0 ? '+' : '').qty_label($signed),
+            "Penyesuaian stok {$product->name} di {$outletName}: ".($signed > 0 ? '+' : '').qty_label($signed),
             $product,
-            ['qty' => $signed, 'note' => $data['note'] ?? null],
+            ['qty' => $signed, 'outlet_id' => $outletId, 'note' => $data['note'] ?? null],
         );
 
-        return back()->with('status', "Stok {$product->name} diperbarui menjadi ".qty_label($product->stock).' '.$product->unit.'.');
+        return back()->with('status', "Stok {$product->name} di {$outletName} menjadi "
+            .qty_label($product->stockAt($outletId)).' '.$product->unit.'.');
     }
 
     public function opname(Request $request): View
     {
         return view('dashboard.stock.opname', [
-            'products' => Product::with('category')
+            'products' => Product::with([
+                'category',
+                'outletStocks' => fn ($q) => $q->withoutGlobalScope('outlet'),
+            ])
                 ->active()
                 ->where('track_stock', true)
                 ->search($request->query('q'))
                 ->orderBy('name')
                 ->get(),
             'filters' => $request->only('q'),
+            'activeOutlet' => app(OutletContext::class)->get(),
         ]);
     }
 
@@ -100,6 +122,13 @@ class StockController extends Controller
             'note' => ['nullable', 'string', 'max:191'],
         ]);
 
+        $outletId = app(OutletContext::class)->id();
+
+        if (! $outletId) {
+            return back()->with('error',
+                'Stok opname dilakukan per outlet. Pilih outlet terlebih dahulu pada pemilih di bagian atas.');
+        }
+
         $adjusted = 0;
 
         foreach ($data['counted'] as $productId => $countedQty) {
@@ -113,7 +142,8 @@ class StockController extends Controller
                 continue;
             }
 
-            if (abs((float) $product->stock - (float) $countedQty) < 0.0001) {
+            // Compare against this branch's shelf, not the chain total.
+            if (abs($product->stockAt($outletId) - (float) $countedQty) < 0.0001) {
                 continue;
             }
 
@@ -122,12 +152,15 @@ class StockController extends Controller
                 (float) $countedQty,
                 $data['note'] ?? 'Stok opname',
                 $request->user()->id,
+                $outletId,
             );
 
             $adjusted++;
         }
 
-        ActivityLog::record('stock.opname', "Stok opname: {$adjusted} produk disesuaikan");
+        $outletName = app(OutletContext::class)->name();
+
+        ActivityLog::record('stock.opname', "Stok opname {$outletName}: {$adjusted} produk disesuaikan");
 
         return redirect()
             ->route('admin.stock.index')

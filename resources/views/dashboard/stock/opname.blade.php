@@ -10,7 +10,13 @@
         <a href="{{ route('admin.stock.index') }}" class="btn btn--ghost btn--icon"><x-icon name="arrow-left" size="18"/></a>
         <div>
             <h1>Stok Opname</h1>
-            <p class="muted mt-4">Isi kolom hitungan fisik. Baris yang dikosongkan akan dilewati.</p>
+            <p class="muted mt-4">
+                @if ($activeOutlet)
+                    Menghitung fisik di <b>{{ $activeOutlet->name }}</b>. Baris yang dikosongkan akan dilewati.
+                @else
+                    <span class="bad">Pilih satu outlet di bagian atas</span> — opname dilakukan per outlet.
+                @endif
+            </p>
         </div>
     </div>
 
@@ -52,14 +58,16 @@
                                 <div class="tiny subtle mono">{{ $product->sku }}</div>
                             </td>
                             <td class="small muted">{{ $product->category?->name ?? '—' }}</td>
-                            <td class="t-right num semi" data-system="{{ (float) $product->stock }}">
-                                {{ qty_label($product->stock) }} {{ $product->unit }}
+                            @php $onHand = $product->stockAt($activeOutlet?->id); @endphp
+                            <td class="t-right num semi" data-system="{{ $onHand }}">
+                                {{ qty_label($onHand) }} {{ $product->unit }}
                             </td>
                             <td class="t-right">
                                 <input type="number" step="0.001" min="0"
                                        name="counted[{{ $product->id }}]" class="input t-right"
-                                       placeholder="{{ qty_label($product->stock) }}"
-                                       data-counted="{{ $product->id }}">
+                                       placeholder="{{ qty_label($onHand) }}"
+                                       data-counted="{{ $product->id }}"
+                                       @disabled(! $activeOutlet)>
                             </td>
                             <td class="t-right num" data-diff="{{ $product->id }}">
                                 <span class="subtle">—</span>
@@ -82,9 +90,10 @@
                 <span class="small muted">
                     <span class="semi" data-changed-count>0</span> produk memiliki selisih
                 </span>
-                <button type="submit" class="btn btn--primary"
+                <button type="submit" class="btn btn--primary" @disabled(! $activeOutlet)
                         data-confirm="Simpan hasil opname? Stok akan disesuaikan dan tercatat di riwayat.">
-                    <x-icon name="check" size="16"/> Simpan Hasil Opname
+                    <x-icon name="check" size="16"/>
+                    Simpan Hasil Opname{{ $activeOutlet ? ' · '.$activeOutlet->code : '' }}
                 </button>
             </div>
         @endif

@@ -72,6 +72,22 @@ if (! function_exists('current_tenant')) {
     }
 }
 
+if (! function_exists('current_outlet')) {
+    /** The branch the request is acting on, or null for "all outlets". */
+    function current_outlet(): ?\App\Models\Outlet
+    {
+        return app(\App\Support\OutletContext::class)->get();
+    }
+}
+
+if (! function_exists('outlet_label')) {
+    /** Human label for the active branch, used on printed documents. */
+    function outlet_label(): string
+    {
+        return app(\App\Support\OutletContext::class)->name();
+    }
+}
+
 if (! function_exists('pos_user')) {
     /** The operator signed in at the terminal, if any. */
     function pos_user(): ?\App\Models\User

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Category;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Services\CodeImageService;
 use App\Services\SkuGenerator;
 use App\Services\StockService;
+use App\Support\OutletContext;
 use App\Support\Tenancy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,9 @@ class ProductController extends Controller
 
     public function index(Request $request): View
     {
-        $products = Product::with('category')
+        // Eager-load branch stock so the listing shows the right figure for
+        // the selected outlet without a query per row.
+        $products = Product::with(['category', 'outletStocks' => fn ($q) => $q->withoutGlobalScope('outlet')])
             ->search($request->query('q'))
             ->when($request->filled('category'), fn ($q) => $q->where('category_id', $request->query('category')))
             ->when($request->query('status') === 'active', fn ($q) => $q->where('is_active', true))
@@ -49,6 +53,7 @@ class ProductController extends Controller
         return view('dashboard.products.form', [
             'product' => new Product(['unit' => 'pcs', 'is_active' => true, 'track_stock' => true]),
             'categories' => Category::active()->orderBy('name')->get(),
+            'outlets' => Outlet::active()->orderBy('sort_order')->orderBy('name')->get(),
             // Show the operator the ID this product is about to receive.
             'skuPreview' => $this->skus->preview($tenant),
             'skuPattern' => $this->skus->describe($tenant),
@@ -63,9 +68,22 @@ class ProductController extends Controller
         $openingStock = (float) ($data['stock'] ?? 0);
         unset($data['stock']);
 
+        // Opening stock has to land in a specific branch. Use the outlet the
+        // dashboard is currently on, or the one the operator picked when
+        // viewing all outlets.
+        $openingOutlet = $request->input('opening_outlet_id')
+            ?: app(OutletContext::class)->id();
+
         $product = Product::create($data);
 
         if ($openingStock > 0) {
+            if (! $openingOutlet) {
+                return redirect()
+                    ->route('admin.products.show', $product)
+                    ->with('error', "Produk {$product->name} dibuat, tetapi stok awal belum dicatat "
+                        .'karena outlet belum dipilih. Tambahkan stok melalui menu Stok & Inventori.');
+            }
+
             $this->stock->apply(
                 $product,
                 $openingStock,
@@ -73,6 +91,7 @@ class ProductController extends Controller
                 $product,
                 'Stok awal saat produk dibuat',
                 $request->user()->id,
+                (int) $openingOutlet,
             );
         }
 
@@ -95,7 +114,7 @@ class ProductController extends Controller
         // Fetched separately rather than as a limited eager load: that form
         // compiles to a window-function subquery MariaDB 10.x rejects.
         $movements = $product->stockMovements()
-            ->with('user')
+            ->with(['user', 'outlet'])
             ->latest()
             ->limit(20)
             ->get();
@@ -103,6 +122,13 @@ class ProductController extends Controller
         return view('dashboard.products.show', [
             'product' => $product,
             'movements' => $movements,
+            // Every branch's shelf for this product, so an Owner can see at
+            // a glance where it is short without switching outlets.
+            'branchStocks' => $product->outletStocks()
+                ->withoutGlobalScope('outlet')
+                ->with('outlet')
+                ->get()
+                ->sortBy(fn ($row) => $row->outlet?->sort_order ?? 0),
             'barcodeSvg' => $this->codes->isRenderable((string) $product->barcode_value, $product->barcode_type)
                 ? $this->codes->barcodeSvg((string) $product->barcode_value, $product->barcode_type, 2, 60)
                 : null,
@@ -115,6 +141,7 @@ class ProductController extends Controller
         return view('dashboard.products.form', [
             'product' => $product,
             'categories' => Category::active()->orderBy('name')->get(),
+            'outlets' => Outlet::active()->orderBy('sort_order')->orderBy('name')->get(),
             'skuPreview' => $product->sku,
             'skuPattern' => $this->skus->describe(app(Tenancy::class)->get()),
         ]);

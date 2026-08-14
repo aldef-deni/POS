@@ -17,7 +17,7 @@ class ShiftController extends Controller
         $from = $request->date('from')?->toDateString() ?? Carbon::today()->subDays(29)->toDateString();
         $to = $request->date('to')?->toDateString() ?? Carbon::today()->toDateString();
 
-        $shifts = Shift::with(['user', 'closedBy'])
+        $shifts = Shift::with(['user', 'closedBy', 'outlet'])
             ->whereBetween('opened_at', [
                 Carbon::parse($from)->startOfDay(),
                 Carbon::parse($to)->endOfDay(),

@@ -4,11 +4,14 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\CheckoutService;
+use App\Services\StockService;
+use App\Support\OutletContext;
 use App\Support\Role;
 use App\Support\Tenancy;
 use Illuminate\Database\Seeder;
@@ -24,20 +27,21 @@ class DatabaseSeeder extends Seeder
         // request would, so generated SKUs and stock ledgers line up.
         app(Tenancy::class)->set($tenant);
 
-        $this->users($tenant);
+        $outlets = $this->outlets();
+        $this->users($tenant, $outlets);
         $categories = $this->categories();
-        $this->products($categories);
+        $this->products($categories, $outlets);
         $this->customers();
-        $this->sampleSales($tenant);
+        $this->sampleSales($tenant, $outlets);
 
         $this->command->newLine();
         $this->command->info('  Data contoh siap.');
         $this->command->line('  Dashboard : /admin/login');
-        $this->command->line('    Owner       owner       / owner123');
-        $this->command->line('    Supervisor  supervisor  / super123');
-        $this->command->line('  Kasir     : /pos/login');
-        $this->command->line('    Kasir 1     kasir1      / kasir123   PIN 1234');
-        $this->command->line('    Kasir 2     kasir2      / kasir123   PIN 5678');
+        $this->command->line('    Owner       owner       / owner123    (semua outlet)');
+        $this->command->line('    Supervisor  supervisor  / super123    (Outlet Cikini)');
+        $this->command->line('  Kasir     : /pos/login  (PIN saja)');
+        $this->command->line('    Budi Santoso   PIN 1234   Outlet Cikini');
+        $this->command->line('    Siti Aminah    PIN 5678   Outlet Kemang');
         $this->command->newLine();
     }
 
@@ -80,18 +84,43 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    protected function users(Tenant $tenant): void
+    /** @return array<string,Outlet> */
+    protected function outlets(): array
+    {
+        $definitions = [
+            ['name' => 'Kopi Senja Cikini', 'code' => 'CKN', 'address' => 'Jl. Merdeka No. 88, Cikini', 'city' => 'Jakarta Pusat', 'phone' => '021-555-0188', 'is_default' => true],
+            ['name' => 'Kopi Senja Kemang', 'code' => 'KMG', 'address' => 'Jl. Kemang Raya No. 12', 'city' => 'Jakarta Selatan', 'phone' => '021-555-0244', 'is_default' => false],
+            ['name' => 'Kopi Senja BSD', 'code' => 'BSD', 'address' => 'Ruko De Park Blok C-7, BSD City', 'city' => 'Tangerang Selatan', 'phone' => '021-555-0399', 'is_default' => false],
+        ];
+
+        $outlets = [];
+
+        foreach ($definitions as $index => $definition) {
+            $outlets[$definition['code']] = Outlet::updateOrCreate(
+                ['code' => $definition['code']],
+                $definition + ['is_active' => true, 'sort_order' => $index],
+            );
+        }
+
+        return $outlets;
+    }
+
+    /** @param array<string,Outlet> $outlets */
+    protected function users(Tenant $tenant, array $outlets): void
     {
         $operators = [
-            ['name' => 'Ade Zulham', 'username' => 'owner', 'email' => 'owner@kopisenja.id', 'role' => Role::Owner, 'password' => 'owner123', 'pin' => '9999'],
-            ['name' => 'Rina Kartika', 'username' => 'supervisor', 'email' => 'supervisor@kopisenja.id', 'role' => Role::Supervisor, 'password' => 'super123', 'pin' => '4321'],
-            ['name' => 'Budi Santoso', 'username' => 'kasir1', 'email' => 'kasir1@kopisenja.id', 'role' => Role::Kasir, 'password' => 'kasir123', 'pin' => '1234'],
-            ['name' => 'Siti Aminah', 'username' => 'kasir2', 'email' => 'kasir2@kopisenja.id', 'role' => Role::Kasir, 'password' => 'kasir123', 'pin' => '5678'],
+            // The Owner oversees every branch, so no outlet is pinned.
+            ['name' => 'Ade Zulham', 'username' => 'owner', 'email' => 'owner@kopisenja.id', 'role' => Role::Owner, 'password' => 'owner123', 'pin' => '9999', 'outlet' => null],
+            ['name' => 'Rina Kartika', 'username' => 'supervisor', 'email' => 'supervisor@kopisenja.id', 'role' => Role::Supervisor, 'password' => 'super123', 'pin' => '4321', 'outlet' => 'CKN'],
+            ['name' => 'Budi Santoso', 'username' => 'kasir1', 'email' => 'kasir1@kopisenja.id', 'role' => Role::Kasir, 'password' => 'kasir123', 'pin' => '1234', 'outlet' => 'CKN'],
+            ['name' => 'Siti Aminah', 'username' => 'kasir2', 'email' => 'kasir2@kopisenja.id', 'role' => Role::Kasir, 'password' => 'kasir123', 'pin' => '5678', 'outlet' => 'KMG'],
+            ['name' => 'Dewi Anggraini', 'username' => 'kasir3', 'email' => 'kasir3@kopisenja.id', 'role' => Role::Kasir, 'password' => 'kasir123', 'pin' => '2468', 'outlet' => 'BSD'],
         ];
 
         foreach ($operators as $operator) {
             User::updateOrCreate(['username' => $operator['username']], [
                 'tenant_id' => $tenant->id,
+                'outlet_id' => $operator['outlet'] ? $outlets[$operator['outlet']]->id : null,
                 'name' => $operator['name'],
                 'email' => $operator['email'],
                 'role' => $operator['role'],
@@ -125,8 +154,11 @@ class DatabaseSeeder extends Seeder
         return $categories;
     }
 
-    /** @param array<string,Category> $categories */
-    protected function products(array $categories): void
+    /**
+     * @param  array<string,Category>  $categories
+     * @param  array<string,Outlet>  $outlets
+     */
+    protected function products(array $categories, array $outlets): void
     {
         $catalogue = [
             ['Kopi', 'Espresso', 8000, 18000, 'cup', 120, true],
@@ -156,7 +188,9 @@ class DatabaseSeeder extends Seeder
             ['Merchandise', 'Mug Keramik Logo', 28000, 65000, 'pcs', 25, false],
         ];
 
-        foreach ($catalogue as [$categoryName, $name, $cost, $price, $unit, $stock, $favorite]) {
+        $stock = app(StockService::class);
+
+        foreach ($catalogue as [$categoryName, $name, $cost, $price, $unit, $opening, $favorite]) {
             $product = Product::updateOrCreate(
                 ['name' => $name],
                 [
@@ -171,16 +205,20 @@ class DatabaseSeeder extends Seeder
                 ],
             );
 
-            // Seed the opening balance through the ledger so the stock report
-            // reconciles against its own history.
-            if ($product->stockMovements()->doesntExist()) {
-                app(\App\Services\StockService::class)->apply(
-                    $product,
-                    $stock,
-                    'in',
-                    null,
-                    'Stok awal (data contoh)',
-                );
+            // Each branch receives its own opening stock through the ledger,
+            // so per-outlet inventory reconciles against its own history.
+            if ($product->stockMovements()->withoutGlobalScope('outlet')->doesntExist()) {
+                foreach ($outlets as $outlet) {
+                    $stock->apply(
+                        $product,
+                        $opening,
+                        'in',
+                        null,
+                        'Stok awal '.$outlet->name,
+                        null,
+                        $outlet->id,
+                    );
+                }
             }
         }
     }
@@ -205,109 +243,129 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Generate three weeks of believable transactions so every report and
-     * chart has something to show on first run.
+     * Three weeks of believable trading at every branch, so each outlet has
+     * its own history to report on.
+     *
+     * @param  array<string,Outlet>  $outlets
      */
-    protected function sampleSales(Tenant $tenant): void
+    protected function sampleSales(Tenant $tenant, array $outlets): void
     {
-        if (\App\Models\Sale::exists()) {
+        if (\App\Models\Sale::withoutGlobalScopes()->exists()) {
             return;
         }
 
         $checkout = app(CheckoutService::class);
-        $cashiers = User::where('role', Role::Kasir->value)->get();
+        $stock = app(StockService::class);
+        $context = app(OutletContext::class);
+
         $products = Product::active()->get();
         $customers = Customer::pluck('id')->all();
         $methods = ['cash', 'cash', 'cash', 'qris', 'qris', 'card', 'transfer'];
 
-        $stockService = app(\App\Services\StockService::class);
+        foreach ($outlets as $outlet) {
+            // Act as if each request came from this branch, so the global
+            // outlet scope stamps everything correctly.
+            $context->set($outlet);
 
-        for ($dayOffset = 20; $dayOffset >= 0; $dayOffset--) {
-            $date = Carbon::today()->subDays($dayOffset);
+            $cashiers = User::where('role', Role::Kasir->value)
+                ->where('outlet_id', $outlet->id)
+                ->get();
 
-            // Morning delivery: top up anything that ran low yesterday, so
-            // three weeks of trading never starves the catalogue.
-            foreach ($products as $product) {
-                $product->refresh();
-
-                if ((float) $product->stock < 40) {
-                    $stockService->apply(
-                        $product,
-                        150 - (float) $product->stock,
-                        'in',
-                        null,
-                        'Penerimaan barang '.$date->format('d/m/Y'),
-                    );
-                }
+            if ($cashiers->isEmpty()) {
+                continue;
             }
 
-            foreach ($cashiers as $cashier) {
-                $shift = Shift::create([
-                    'tenant_id' => $tenant->id,
-                    'user_id' => $cashier->id,
-                    'opened_at' => $date->copy()->setTime(8, 0),
-                    'opening_cash' => 500000,
-                    'expected_cash' => 500000,
-                    'status' => 'open',
-                ]);
+            // Busier branches make the outlet comparison report meaningful.
+            $busyness = match ($outlet->code) {
+                'CKN' => 1.0,
+                'KMG' => 0.75,
+                default => 0.5,
+            };
 
-                // Weekends are busier than weekdays.
-                $transactions = $date->isWeekend() ? random_int(9, 16) : random_int(5, 11);
+            for ($dayOffset = 20; $dayOffset >= 0; $dayOffset--) {
+                $date = Carbon::today()->subDays($dayOffset);
 
-                for ($i = 0; $i < $transactions; $i++) {
-                    $items = $products->random(random_int(1, 4))
-                        ->map(fn (Product $p) => [
-                            'product_id' => $p->id,
-                            'qty' => random_int(1, 3),
-                        ])->values()->all();
-
-                    $priced = $checkout->calculate($tenant, $items);
-                    $total = $priced['totals']['total'];
-
-                    if ($total <= 0) {
-                        continue;
-                    }
-
-                    $method = $methods[array_rand($methods)];
-
-                    // Cash customers hand over a rounded-up note.
-                    $amount = $method === 'cash'
-                        ? (float) (ceil($total / 10000) * 10000)
-                        : $total;
-
-                    try {
-                        $sale = $checkout->checkout($tenant, $cashier, $shift, [
-                            'items' => $items,
-                            'payments' => [['method' => $method, 'amount' => $amount]],
-                            'customer_id' => random_int(1, 100) <= 35 ? $customers[array_rand($customers)] : null,
-                        ]);
-
-                        // Spread transactions across trading hours.
-                        $at = $date->copy()->setTime(random_int(8, 20), random_int(0, 59));
-                        $sale->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
-                    } catch (\Throwable $e) {
-                        // Out of stock on a random basket — skip and continue.
-                        continue;
+                // Morning delivery keeps three weeks of trading supplied.
+                foreach ($products as $product) {
+                    if ($product->stockAt($outlet->id) < 40) {
+                        $stock->apply(
+                            $product,
+                            150 - $product->stockAt($outlet->id),
+                            'in',
+                            null,
+                            'Penerimaan barang '.$date->format('d/m/Y'),
+                            null,
+                            $outlet->id,
+                        );
                     }
                 }
 
-                $shift->refresh();
+                foreach ($cashiers as $cashier) {
+                    $shift = Shift::create([
+                        'tenant_id' => $tenant->id,
+                        'outlet_id' => $outlet->id,
+                        'user_id' => $cashier->id,
+                        'opened_at' => $date->copy()->setTime(8, 0),
+                        'opening_cash' => 500000,
+                        'expected_cash' => 500000,
+                        'status' => 'open',
+                    ]);
 
-                // Close every shift except today's, leaving one live drawer.
-                if ($dayOffset > 0) {
-                    $expected = $shift->expectedCashNow();
-                    $variance = random_int(0, 100) <= 70 ? 0 : random_int(-25000, 25000);
+                    $transactions = (int) round(($date->isWeekend() ? random_int(9, 16) : random_int(5, 11)) * $busyness);
 
-                    $shift->forceFill([
-                        'closed_at' => $date->copy()->setTime(21, 0),
-                        'counted_cash' => $expected + $variance,
-                        'expected_cash' => $expected,
-                        'cash_variance' => $variance,
-                        'closed_by' => $cashier->id,
-                        'status' => 'closed',
-                    ])->save();
+                    for ($i = 0; $i < $transactions; $i++) {
+                        $items = $products->random(random_int(1, 4))
+                            ->map(fn (Product $p) => [
+                                'product_id' => $p->id,
+                                'qty' => random_int(1, 3),
+                            ])->values()->all();
+
+                        $priced = $checkout->calculate($tenant, $items);
+                        $total = $priced['totals']['total'];
+
+                        if ($total <= 0) {
+                            continue;
+                        }
+
+                        $method = $methods[array_rand($methods)];
+                        $amount = $method === 'cash'
+                            ? (float) (ceil($total / 10000) * 10000)
+                            : $total;
+
+                        try {
+                            $sale = $checkout->checkout($tenant, $cashier, $shift, [
+                                'items' => $items,
+                                'payments' => [['method' => $method, 'amount' => $amount]],
+                                'customer_id' => random_int(1, 100) <= 35 ? $customers[array_rand($customers)] : null,
+                            ]);
+
+                            $at = $date->copy()->setTime(random_int(8, 20), random_int(0, 59));
+                            $sale->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+                        } catch (\Throwable $e) {
+                            continue;
+                        }
+                    }
+
+                    $shift->refresh();
+
+                    // Close every shift except today's, leaving live drawers.
+                    if ($dayOffset > 0) {
+                        $expected = $shift->expectedCashNow();
+                        $variance = random_int(0, 100) <= 70 ? 0 : random_int(-25000, 25000);
+
+                        $shift->forceFill([
+                            'closed_at' => $date->copy()->setTime(21, 0),
+                            'counted_cash' => $expected + $variance,
+                            'expected_cash' => $expected,
+                            'cash_variance' => $variance,
+                            'closed_by' => $cashier->id,
+                            'status' => 'closed',
+                        ])->save();
+                    }
                 }
             }
         }
+
+        $context->forget();
     }
 }

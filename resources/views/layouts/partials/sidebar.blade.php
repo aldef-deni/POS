@@ -19,6 +19,7 @@
             ['route' => 'admin.customers.index', 'label' => 'Pelanggan', 'icon' => 'users', 'can' => 'customer.manage'],
         ],
         'Administrasi' => [
+            ['route' => 'admin.outlets.index', 'label' => 'Outlet & Cabang', 'icon' => 'store', 'can' => 'outlet.manage'],
             ['route' => 'admin.users.index', 'label' => 'Pengguna & Peran', 'icon' => 'shield', 'can' => 'user.manage'],
             ['route' => 'admin.settings.index', 'label' => 'Pengaturan', 'icon' => 'settings', 'can' => 'settings.manage'],
             ['route' => 'admin.activity.index', 'label' => 'Log Aktivitas', 'icon' => 'activity', 'can' => 'audit.view'],

@@ -18,7 +18,11 @@
     <div>
         <h1>Selamat datang, {{ explode(' ', auth('web')->user()->name)[0] }}</h1>
         <p class="muted mt-4">
-            Ringkasan periode {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
+            <span class="badge badge--{{ $outlet ? 'neutral' : 'violet' }}">
+                <x-icon name="{{ $outlet ? 'store' : 'layers' }}" size="11"/>
+                {{ $outlet?->name ?? 'Semua Outlet' }}
+            </span>
+            · Ringkasan periode {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
             – {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}
         </p>
     </div>
@@ -78,6 +82,45 @@
         </div>
     @endallow
 </div>
+
+{{-- Branch comparison, only while looking at the whole chain --}}
+@if ($outletPerformance->isNotEmpty())
+    <div class="card mb-20">
+        <div class="card__head">
+            <div>
+                <div class="card__title">Performa per Outlet</div>
+                <div class="card__sub">Kontribusi setiap cabang pada periode ini</div>
+            </div>
+            @allow('outlet.manage')
+                <a href="{{ route('admin.outlets.index') }}" class="btn btn--ghost btn--sm">
+                    Kelola outlet <x-icon name="chevron-right" size="14"/>
+                </a>
+            @endallow
+        </div>
+        <div class="card__body">
+            @php $maxRevenue = $outletPerformance->max('revenue') ?: 1; @endphp
+
+            @foreach ($outletPerformance as $row)
+                <div class="mb-16">
+                    <div class="between mb-4">
+                        <span class="small semi">
+                            <span class="code-chip" style="font-size:10px;padding:1px 6px">{{ $row['code'] }}</span>
+                            {{ $row['name'] }}
+                        </span>
+                        <span class="small num">{{ money($row['revenue']) }}</span>
+                    </div>
+                    <div class="meter">
+                        <div class="meter__fill" style="width:{{ ($row['revenue'] / $maxRevenue) * 100 }}%"></div>
+                    </div>
+                    <div class="tiny subtle mt-4">
+                        {{ $row['transactions'] }} transaksi · rata-rata {{ money($row['average_basket']) }}
+                        @allow('report.profit') · laba {{ money($row['profit']) }} @endallow
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endif
 
 <div class="grid grid-2-1 mb-20">
     {{-- Revenue trend --}}

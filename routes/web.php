@@ -5,6 +5,7 @@ use App\Http\Controllers\Dashboard\ActivityLogController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\CustomerController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\OutletController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ReportController;
 use App\Http\Controllers\Dashboard\SaleController;
@@ -123,6 +124,18 @@ Route::middleware('dashboard.auth')->prefix('dashboard')->name('admin.')->group(
     });
 
     // --- Administration ------------------------------------------------
+    // --- Branches ------------------------------------------------------
+    // Switching is available to anyone not pinned to a single outlet; the
+    // controller re-checks that, so an assigned operator cannot roam.
+    Route::post('/outlet-switch', [OutletController::class, 'switch'])->name('outlets.switch');
+
+    Route::middleware('can.do:outlet.manage')->group(function () {
+        Route::get('/outlets', [OutletController::class, 'index'])->name('outlets.index');
+        Route::post('/outlets', [OutletController::class, 'store'])->name('outlets.store');
+        Route::put('/outlets/{outlet}', [OutletController::class, 'update'])->name('outlets.update');
+        Route::delete('/outlets/{outlet}', [OutletController::class, 'destroy'])->name('outlets.destroy');
+    });
+
     Route::middleware('can.do:user.manage')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');

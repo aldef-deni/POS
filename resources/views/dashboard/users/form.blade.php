@@ -102,12 +102,65 @@
         </div>
 
         <div class="stack g-16">
+            {{-- Placed above the role card on purpose: putting an operator in
+                 the wrong branch is the costliest mistake on this form, so it
+                 is asked first and never pre-answered. --}}
+            <div class="card" style="border-color:var(--brand-200)">
+                <div class="card__head">
+                    <div>
+                        <div class="card__title">Penempatan Outlet <span class="field__req">*</span></div>
+                        <div class="card__sub">Menentukan stok, shift, dan laporan yang diakses</div>
+                    </div>
+                </div>
+                <div class="card__body">
+                    @php
+                        // No default selection — the operator must choose.
+                        $currentOutlet = old('outlet_id', $user->exists
+                            ? ($user->outlet_id ?? ($user->isOwner() ? 'all' : ''))
+                            : '');
+                    @endphp
+
+                    <div class="field" style="margin-bottom:12px">
+                        <select name="outlet_id" class="select @error('outlet_id') is-error @enderror" required
+                                data-outlet-select>
+                            <option value="" @selected($currentOutlet === '')>— Pilih outlet penempatan —</option>
+
+                            @foreach ($outlets as $option)
+                                <option value="{{ $option->id }}" @selected((string) $currentOutlet === (string) $option->id)>
+                                    {{ $option->name }} ({{ $option->code }}){{ $option->city ? ' · '.$option->city : '' }}
+                                </option>
+                            @endforeach
+
+                            <option value="all" @selected($currentOutlet === 'all')>
+                                Semua Outlet — khusus Owner
+                            </option>
+                        </select>
+
+                        @error('outlet_id')
+                            <span class="field__error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="alert alert--warn" style="margin:0" data-outlet-warning hidden>
+                        <x-icon name="alert" size="16" class="alert__icon"/>
+                        <div class="tiny">
+                            Pilihan <b>Semua Outlet</b> hanya berlaku untuk Owner. Supervisor dan Kasir
+                            wajib ditempatkan pada satu outlet agar transaksi dan stok tidak tertukar.
+                        </div>
+                    </div>
+
+                    <p class="field__hint mt-8">
+                        Kasir hanya dapat menjual stok outlet ini, dan seluruh transaksinya tercatat di sini.
+                    </p>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card__head"><div class="card__title">Peran &amp; Akses</div></div>
                 <div class="card__body">
                     @foreach ($roles as $role)
                         <label class="check mb-16" style="align-items:flex-start">
-                            <input type="radio" name="role" value="{{ $role->value }}"
+                            <input type="radio" name="role" value="{{ $role->value }}" data-role-radio
                                    @checked(old('role', $user->role?->value ?? 'Kasir') === $role->value)
                                    @disabled($user->exists && $user->id === auth('web')->id())>
                             <span>
@@ -144,5 +197,35 @@
         </div>
     </div>
 </form>
+
+@push('scripts')
+<script>
+    // Catches the mismatch in the browser so the operator sees it while
+    // choosing; the server enforces the same rule regardless.
+    (function () {
+        var select = document.querySelector('[data-outlet-select]');
+        var warning = document.querySelector('[data-outlet-warning]');
+        if (!select || !warning) return;
+
+        function currentRole() {
+            var checked = document.querySelector('[data-role-radio]:checked');
+            return checked ? checked.value : 'Kasir';
+        }
+
+        function sync() {
+            var mismatch = select.value === 'all' && currentRole() !== 'Owner';
+            warning.hidden = !mismatch;
+            select.classList.toggle('is-error', mismatch);
+        }
+
+        select.addEventListener('change', sync);
+        document.querySelectorAll('[data-role-radio]').forEach(function (radio) {
+            radio.addEventListener('change', sync);
+        });
+
+        sync();
+    })();
+</script>
+@endpush
 
 @endsection

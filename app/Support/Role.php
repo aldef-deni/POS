@@ -29,9 +29,9 @@ enum Role: string
     public function description(): string
     {
         return match ($this) {
-            self::Owner => 'Akses penuh: pengaturan toko, manajemen pengguna, format ID produk, semua laporan termasuk laba, void & hapus data.',
-            self::Supervisor => 'Operasional harian: kelola produk, stok, pelanggan, setujui void, dan lihat seluruh laporan. Tidak bisa mengubah pengaturan toko atau pengguna.',
-            self::Kasir => 'Hanya terminal kasir: melakukan transaksi, cetak struk, kelola shift sendiri. Tidak memiliki akses ke dashboard pengelola.',
+            self::Owner => 'Akses penuh seluruh outlet: kelola cabang, pengaturan toko, pengguna, format ID produk, semua laporan termasuk laba, void & hapus data.',
+            self::Supervisor => 'Operasional harian pada outlet yang ditugaskan: kelola produk, stok, pelanggan, setujui void, dan lihat laporan outletnya. Tidak bisa mengubah pengaturan toko, outlet, atau pengguna.',
+            self::Kasir => 'Hanya terminal kasir pada outlet yang ditugaskan: melakukan transaksi, cetak struk, kelola shift sendiri. Tidak memiliki akses ke dashboard pengelola.',
         };
     }
 
@@ -119,6 +119,8 @@ enum Role: string
         'sale.view', 'sale.void', 'sale.refund',
         'shift.view.all', 'shift.close.other',
         'user.manage',
+        'outlet.manage',
+        'outlet.switch',
         'settings.manage',
         'sku.manage',
         'audit.view',

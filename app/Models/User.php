@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use App\Support\Role;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -16,6 +17,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'tenant_id',
+        'outlet_id',
         'name',
         'username',
         'email',
@@ -44,6 +46,15 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'role' => Role::class,
         ];
+    }
+
+    /**
+     * The branch this operator works at. Null means "all outlets" and is
+     * only ever allowed for an Owner overseeing the whole business.
+     */
+    public function outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class);
     }
 
     public function shifts(): HasMany

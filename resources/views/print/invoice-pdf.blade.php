@@ -84,9 +84,14 @@
     <tr>
         <td>
             <div class="brand">{{ $tenant?->name ?? config('app.name') }}</div>
+            @if ($sale->outlet)
+                <div style="font-size:9.5pt;font-weight:bold;color:#4f46e5;margin-top:2px">
+                    {{ $sale->outlet->name }} ({{ $sale->outlet->code }})
+                </div>
+            @endif
             <div class="brand-sub">
                 {{ $tenant?->legal_name }}<br>
-                {{ $tenant?->address }}{{ $tenant?->city ? ', '.$tenant->city : '' }}<br>
+                {{ $sale->outlet?->printableAddress() ?? $tenant?->address }}{{ ($sale->outlet?->city ?? $tenant?->city) ? ', '.($sale->outlet?->city ?? $tenant?->city) : '' }}<br>
                 @if ($tenant?->phone) Telp. {{ $tenant->phone }} @endif
                 @if ($tenant?->email) · {{ $tenant->email }} @endif
                 @if ($tenant?->tax_number) <br>NPWP {{ $tenant->tax_number }} @endif

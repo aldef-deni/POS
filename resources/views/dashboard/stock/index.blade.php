@@ -8,14 +8,25 @@
 <div class="page-head">
     <div>
         <h1>Stok &amp; Inventori</h1>
-        <p class="muted mt-4">Setiap perubahan stok tercatat lengkap dengan saldo sebelum dan sesudah.</p>
+        <p class="muted mt-4">
+            @if ($activeOutlet)
+                Menampilkan stok <b>{{ $activeOutlet->name }}</b>. Setiap perubahan tercatat lengkap
+                dengan saldo sebelum dan sesudah.
+            @else
+                Menampilkan <b>seluruh outlet</b>. Pilih satu outlet di bagian atas untuk menyesuaikan stok.
+            @endif
+        </p>
     </div>
     <div class="row g-8">
         <a href="{{ route('admin.stock.opname') }}" class="btn btn--outline">
             <x-icon name="layers" size="16"/> Stok Opname
         </a>
         @allow('stock.adjust')
-            <button type="button" class="btn btn--primary" data-modal-open="adjust-modal">
+            {{-- Adjusting needs a destination branch, so the control is
+                 disabled rather than failing after the fact. --}}
+            <button type="button" class="btn btn--primary {{ $activeOutlet ? '' : 'is-disabled' }}"
+                    @if ($activeOutlet) data-modal-open="adjust-modal" @else disabled
+                    title="Pilih satu outlet terlebih dahulu" @endif>
                 <x-icon name="plus" size="16"/> Penyesuaian Stok
             </button>
         @endallow
@@ -38,10 +49,11 @@
         <div class="card__body card__body--tight">
             <div class="row g-8 wrap">
                 @foreach ($lowStock as $product)
+                    @php $onHand = $product->stockAt($activeOutlet?->id); @endphp
                     <a href="{{ route('admin.products.show', $product) }}"
-                       class="badge badge--{{ $product->isOutOfStock() ? 'bad' : 'warn' }}"
+                       class="badge badge--{{ $onHand <= 0 ? 'bad' : 'warn' }}"
                        style="padding:6px 11px">
-                        {{ $product->name }} · {{ qty_label($product->stock) }} {{ $product->unit }}
+                        {{ $product->name }} · {{ qty_label($onHand) }} {{ $product->unit }}
                     </a>
                 @endforeach
             </div>
@@ -81,7 +93,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Waktu</th><th>Produk</th><th>Jenis</th>
+                    <th>Waktu</th><th>Outlet</th><th>Produk</th><th>Jenis</th>
                     <th class="t-right">Perubahan</th><th class="t-right">Sebelum</th>
                     <th class="t-right">Sesudah</th><th>Catatan</th><th>Oleh</th>
                 </tr>
@@ -90,6 +102,7 @@
                 @forelse ($movements as $movement)
                     <tr>
                         <td class="small muted nowrap">{{ $movement->created_at->format('d/m/y H:i') }}</td>
+                        <td><span class="code-chip">{{ $movement->outlet?->code ?? '—' }}</span></td>
                         <td>
                             <a href="{{ route('admin.products.show', $movement->product_id) }}" class="semi small">
                                 {{ $movement->product?->name ?? '—' }}
@@ -110,7 +123,7 @@
                         <td class="small muted">{{ $movement->user?->name ?? 'Sistem' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="8">
+                    <tr><td colspan="9">
                         <div class="empty">
                             <div class="empty__icon"><x-icon name="boxes" size="24"/></div>
                             <div class="empty__title">Belum ada pergerakan stok</div>
