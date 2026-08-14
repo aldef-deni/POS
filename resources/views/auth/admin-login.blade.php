@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Masuk Dashboard · {{ $tenant?->name ?? config('app.name') }}</title>
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/pos.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/pos.css') }}">
 </head>
 <body>
 <div class="pos-auth">
     <div class="pos-auth__card">
         <aside class="pos-auth__aside">
             <div>
-                <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech" class="aldef-lockup mb-20">
+                <img src="{{ asset_v('assets/img/aldef-logo.png') }}" alt="Aldef Tech" width="168" height="155" decoding="async" class="aldef-lockup mb-20">
 
                 <div class="row g-10 mb-24">
                     <div class="aldef-chip aldef-chip--sm" style="background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)">
@@ -55,7 +55,7 @@
 
         <div class="pos-auth__form">
             {{-- Repeated here because the branded panel is hidden on phones. --}}
-            <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+            <img src="{{ asset_v('assets/img/aldef-logo.png') }}" alt="Aldef Tech" width="168" height="155" decoding="async"
                  class="aldef-lockup aldef-lockup--sm mb-16 aldef-lockup--mobile">
 
             <h1 style="font-size:23px">Masuk Dashboard</h1>

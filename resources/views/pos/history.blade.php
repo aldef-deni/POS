@@ -13,8 +13,8 @@
         } catch (e) {}
     </script>
 
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/pos.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/pos.css') }}">
 </head>
 <body @if(session('status')) data-flash="{{ session('status') }}" data-flash-type="ok"
       @elseif(session('error')) data-flash="{{ session('error') }}" data-flash-type="bad" @endif>
@@ -154,6 +154,6 @@
     </div>
 </div>
 
-<script src="{{ asset('assets/js/app.js') }}"></script>
+<script src="{{ asset_v('assets/js/app.js') }}"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@
         } catch (e) {}
     </script>
 
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}?v={{ config('app.asset_version', '1') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
     @stack('styles')
 </head>
 <body @if(session('status')) data-flash="{{ session('status') }}" data-flash-type="ok"
@@ -61,7 +61,7 @@
     </div>
 </div>
 
-<script src="{{ asset('assets/js/app.js') }}?v={{ config('app.asset_version', '1') }}"></script>
+<script src="{{ asset_v('assets/js/app.js') }}"></script>
 @stack('scripts')
 
 <style>

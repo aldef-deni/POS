@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Laporan Shift #{{ $shift->id }}</title>
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/pos.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/pos.css') }}">
     <style>
         @media print {
             .no-print { display: none !important; }
@@ -168,6 +168,6 @@
     </div>
 </div>
 
-<script src="{{ asset('assets/js/app.js') }}"></script>
+<script src="{{ asset_v('assets/js/app.js') }}"></script>
 </body>
 </html>

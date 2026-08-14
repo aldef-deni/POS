@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Masuk Kasir · {{ $tenant?->name ?? config('app.name') }}</title>
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/pos.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/pos.css') }}">
 </head>
 <body>
 
@@ -13,7 +13,7 @@
     <div class="pos-auth__card">
         <aside class="pos-auth__aside">
             <div class="t-center">
-                <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+                <img src="{{ asset_v('assets/img/aldef-logo.png') }}" alt="Aldef Tech" width="168" height="155" decoding="async"
                      class="aldef-lockup" style="margin-inline:auto">
 
                 <div class="store-name">
@@ -49,7 +49,7 @@
 
         <div class="pos-auth__form">
             {{-- Repeated because the branded panel is hidden on phones. --}}
-            <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+            <img src="{{ asset_v('assets/img/aldef-logo.png') }}" alt="Aldef Tech" width="168" height="155" decoding="async"
                  class="aldef-lockup aldef-lockup--sm mb-16 aldef-lockup--mobile">
 
             <h1 style="font-size:22px">Masuk Kasir</h1>
@@ -140,7 +140,7 @@
     </div>
 </div>
 
-<script src="{{ asset('assets/js/app.js') }}"></script>
+<script src="{{ asset_v('assets/js/app.js') }}"></script>
 <script>
     (function () {
         var form = document.getElementById('pin-form');

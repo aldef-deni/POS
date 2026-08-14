@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $tenant?->name ?? config('app.name') }} · Sistem Kasir</title>
-    <link rel="stylesheet" href="{{ asset('assets/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
     <style>
         .hero {
             min-height: 100vh;
@@ -52,7 +52,7 @@
 <body>
 <div class="hero">
     <div class="hero__inner">
-        <img src="{{ asset('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
+        <img src="{{ asset_v('assets/img/aldef-logo.png') }}" alt="Aldef Tech"
              style="width:100%;max-width:168px;height:auto;margin-bottom:22px">
 
         <div>
@@ -114,7 +114,8 @@
 
         <div class="mt-24">
             <span class="aldef-credit">
-                <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="">
+                <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt=""
+                     width="16" height="16" decoding="async">
                 Dikembangkan oleh Aldef Tech
             </span>
         </div>

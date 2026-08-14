@@ -43,6 +43,28 @@ if (! function_exists('percent_label')) {
     }
 }
 
+if (! function_exists('asset_v')) {
+    /**
+     * Asset URL stamped with the file's own modification time.
+     *
+     * A fixed version string is worse than none: .htaccess tells browsers to
+     * keep CSS for a week, so after a deploy they happily serve yesterday's
+     * stylesheet against today's markup. Stamping with mtime makes the URL
+     * change exactly when the file does, and never otherwise.
+     */
+    function asset_v(string $path): string
+    {
+        $full = public_path($path);
+
+        // Deliberately not memoised in a static: under a long-running worker
+        // that would freeze the stamp until the process restarted. PHP's own
+        // stat cache already makes the repeat calls essentially free.
+        $stamp = is_file($full) ? (string) filemtime($full) : '0';
+
+        return asset($path).'?v='.$stamp;
+    }
+}
+
 if (! function_exists('current_tenant')) {
     function current_tenant(): ?\App\Models\Tenant
     {

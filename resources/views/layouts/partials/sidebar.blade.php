@@ -30,8 +30,11 @@
 
 <aside class="sidebar no-print">
     <div class="sidebar__brand">
+        {{-- Intrinsic size is declared so the mark stays sane even if the
+             stylesheet is slow or blocked. --}}
         <div class="aldef-chip">
-            <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="Aldef Tech">
+            <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt="Aldef Tech"
+                 width="32" height="32" loading="eager" decoding="async">
         </div>
         <div class="grow" style="min-width:0">
             <div class="brand-name truncate">{{ $tenant?->name ?? 'Kasir POS' }}</div>
@@ -79,7 +82,8 @@
 
         <div class="t-center mt-12">
             <span class="aldef-credit">
-                <img src="{{ asset('assets/img/aldef-mark.png') }}" alt="">
+                <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt=""
+                     width="16" height="16" loading="lazy" decoding="async">
                 Aldef Tech
             </span>
         </div>
