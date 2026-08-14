@@ -141,7 +141,8 @@
                 <div class="field" style="margin-bottom:0">
                     <label class="field__label">PIN Penyetuju <span class="field__req">*</span></label>
                     <input type="password" name="pin" class="input mono" inputmode="numeric"
-                           maxlength="8" required placeholder="••••">
+                           minlength="4" maxlength="8" required placeholder="4–8 digit">
+                    <span class="field__hint">PIN kasir milik Owner/Supervisor yang menyetujui.</span>
                 </div>
             </div>
 

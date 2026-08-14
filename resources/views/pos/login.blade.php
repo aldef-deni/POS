@@ -107,10 +107,13 @@
                                 @endforeach
                             </div>
 
-                            <div class="pin-display">
-                                @for ($i = 0; $i < 6; $i++)
-                                    <span class="pin-dot" data-dot="{{ $i }}"></span>
-                                @endfor
+                            {{-- PIN panjangnya 4–8 digit, jadi titiknya tumbuh
+                                 mengikuti ketikan. Menampilkan jumlah slot
+                                 tetap akan menyesatkan operator ber-PIN 4. --}}
+                            <div class="pin-display" data-pin-display></div>
+
+                            <div class="t-center tiny subtle mb-12" data-pin-hint>
+                                Masukkan PIN Anda (4–8 digit), lalu tekan Masuk
                             </div>
 
                             <div class="keypad">
@@ -171,21 +174,44 @@
         var form = document.getElementById('pin-form');
         if (!form) return;
 
+        var MIN_PIN = 4;
+        var MAX_PIN = 8;
+
         var pin = '';
         var selected = null;
 
         var userField = document.getElementById('pin-user');
         var pinField = document.getElementById('pin-value');
         var submit = document.getElementById('pin-submit');
+        var display = document.querySelector('[data-pin-display]');
+        var hint = document.querySelector('[data-pin-hint]');
 
         function refresh() {
-            document.querySelectorAll('[data-dot]').forEach(function (dot, index) {
-                dot.classList.toggle('is-filled', index < pin.length);
-            });
+            // Show the minimum number of slots, growing as the operator types
+            // past it — the PIN length is not fixed, and their real PIN is
+            // hashed so we cannot know it in advance.
+            var slots = Math.max(MIN_PIN, pin.length);
+            var dots = '';
+
+            for (var i = 0; i < slots; i++) {
+                dots += '<span class="pin-dot' + (i < pin.length ? ' is-filled' : '') + '"></span>';
+            }
+
+            display.innerHTML = dots;
 
             pinField.value = pin;
             userField.value = selected || '';
-            submit.disabled = !(selected && pin.length >= 4);
+
+            var ready = Boolean(selected) && pin.length >= MIN_PIN;
+            submit.disabled = !ready;
+
+            if (!selected) {
+                hint.textContent = 'Pilih operator terlebih dahulu';
+            } else if (pin.length < MIN_PIN) {
+                hint.textContent = 'Masukkan PIN Anda (4–8 digit), lalu tekan Masuk';
+            } else {
+                hint.textContent = 'Tekan Masuk atau Enter untuk melanjutkan';
+            }
         }
 
         document.querySelectorAll('[data-operator]').forEach(function (button) {
@@ -204,21 +230,28 @@
 
                 if (value === 'clear') pin = '';
                 else if (value === 'back') pin = pin.slice(0, -1);
-                else if (pin.length < 6) pin += value;
+                else if (pin.length < MAX_PIN) pin += value;
 
                 refresh();
-
-                // A full 6-digit PIN with an operator chosen submits itself.
-                if (pin.length === 6 && selected) form.submit();
             });
         });
 
-        // Physical keyboards and numeric keypads work too.
+        // Physical keyboards and numeric keypads work too. There is no
+        // auto-submit: PIN length varies per operator, so the operator
+        // decides when the entry is complete.
         document.addEventListener('keydown', function (event) {
             if (!document.querySelector('[data-tab-panel="pin"]').classList.contains('is-active')) return;
 
-            if (/^[0-9]$/.test(event.key) && pin.length < 6) { pin += event.key; refresh(); }
-            else if (event.key === 'Backspace') { pin = pin.slice(0, -1); refresh(); }
+            if (/^[0-9]$/.test(event.key)) {
+                if (pin.length < MAX_PIN) { pin += event.key; refresh(); }
+            } else if (event.key === 'Backspace') {
+                event.preventDefault();
+                pin = pin.slice(0, -1);
+                refresh();
+            } else if (event.key === 'Enter' && !submit.disabled) {
+                event.preventDefault();
+                form.submit();
+            }
         });
 
         // Preselect when there is only one operator to choose from.

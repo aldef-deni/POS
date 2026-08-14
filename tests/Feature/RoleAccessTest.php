@@ -75,6 +75,39 @@ class RoleAccessTest extends PosTestCase
         $this->get('/dashboard/settings')->assertForbidden();
     }
 
+    public function test_four_digit_pin_signs_the_operator_in(): void
+    {
+        // PIN length is variable (4–8), and the seeded operators use four
+        // digits — the keypad must accept that without padding.
+        $response = $this->post('/pos/login', [
+            'user_id' => $this->kasir->id,
+            'pin' => '1234',
+        ]);
+
+        $this->assertTrue(auth('pos')->check());
+        $response->assertRedirect(route('pos.shift.open'));
+    }
+
+    public function test_pin_shorter_than_four_digits_is_rejected(): void
+    {
+        $this->post('/pos/login', [
+            'user_id' => $this->kasir->id,
+            'pin' => '123',
+        ])->assertSessionHasErrors('pin');
+
+        $this->assertFalse(auth('pos')->check());
+    }
+
+    public function test_wrong_pin_is_rejected(): void
+    {
+        $this->post('/pos/login', [
+            'user_id' => $this->kasir->id,
+            'pin' => '9999',
+        ])->assertSessionHasErrors('pin');
+
+        $this->assertFalse(auth('pos')->check());
+    }
+
     public function test_deactivated_operator_cannot_use_the_terminal(): void
     {
         $this->kasir->update(['is_active' => false]);
