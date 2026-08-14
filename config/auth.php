@@ -33,10 +33,20 @@ return [
     |
     | Supported: "session"
     |
+    | The "web" guard protects the management dashboard (Owner / Supervisor).
+    | The "pos" guard protects the cashier terminal and keeps a completely
+    | separate session payload, so an operator signing in at the terminal is
+    | never signed in to the dashboard, and vice versa.
+    |
     */
 
     'guards' => [
         'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'pos' => [
             'driver' => 'session',
             'provider' => 'users',
         ],

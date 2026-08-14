@@ -1,0 +1,20 @@
+# Uploaded files are served as static content only — never executed.
+# This is the second line of defence behind server-side MIME validation.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
+
+Options -ExecCGI -Indexes
+RemoveHandler .php .phtml .phar .php3 .php4 .php5 .php7 .php8 .pl .py .cgi .sh
+AddType text/plain .php .phtml .phar .pl .py .cgi .sh
+
+<FilesMatch "\.(php|phtml|phar|php[0-9]|pl|py|cgi|sh|htaccess)$">
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>

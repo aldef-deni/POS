@@ -38,10 +38,18 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Publicly reachable uploads (logos, product images).
+         *
+         * The application runs with the document root at the project root —
+         * there is no /public folder — so these files live in /uploads and
+         * are served directly by the web server. No symlink is involved,
+         * which keeps the deployment ZIP portable to cPanel.
+         */
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'root' => public_path('uploads'),
+            'url' => rtrim(env('APP_URL', ''), '/').'/uploads',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -71,10 +79,11 @@ return [
     | `storage:link` Artisan command is executed. The array keys should be
     | the locations of the links and the values should be their targets.
     |
+    | The public disk writes straight into a web-reachable folder (/uploads),
+    | so no symbolic link is required for this application.
+    |
     */
 
-    'links' => [
-        public_path('storage') => storage_path('app/public'),
-    ],
+    'links' => [],
 
 ];

@@ -1,16 +1,74 @@
-# To prevent access to .env and other files
-<Files .*>
-# Apache 2.2
-<IfModule !mod_authz_core.c>
-Order deny,allow
-Deny from all
-</IfModule>
-# Apache 2.4
-<IfModule mod_authz_core.c>
-Require all denied
-</IfModule>
-</Files>
+# ==============================================================
+#  Kasir POS — Apache configuration
+#
+#  The application is served from this directory (no /public folder),
+#  which is what cPanel expects when the app is unzipped into
+#  public_html. Because the framework's own folders now sit under the
+#  document root, the rules below deny direct access to all of them and
+#  route every remaining request through index.php.
+# ==============================================================
 
-<IfModule mod_alias.c>
-RedirectMatch 301 ^/$ https://kasir.dekorasi.me/public
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # --- Block the framework's internals -----------------------
+    # These must be denied explicitly: they are real directories under
+    # the document root, so without this a browser could read .env,
+    # source files, logs, or the Composer manifests.
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor|cache)(/.*)?$ - [F,L]
+    RewriteRule ^(\.env|\.env\..*|composer\.(json|lock)|package\.json|artisan|phpunit\.xml|.*\.md)$ - [F,L]
+
+    # --- Standard Laravel front-controller rules ---------------
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect trailing slashes if not a folder
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send everything that is not a real file or folder to Laravel
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# --- Belt-and-braces deny for dotfiles ------------------------
+<FilesMatch "^\.">
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
+# Uploaded files are prevented from executing by uploads/.htaccess —
+# a <Directory> block is not valid inside an .htaccess file.
+
+# --- Caching for static assets --------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml
+</IfModule>
+
+# --- Security headers -----------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

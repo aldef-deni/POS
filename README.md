@@ -1,66 +1,235 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Kasir POS — SaaS Point of Sale
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi kasir berbasis **Laravel 11** dengan terminal kasir yang berdiri sendiri,
+dashboard pengelola berbasis peran, pembuatan ID/barcode/QR produk otomatis, dan
+pelaporan lengkap yang dapat diekspor ke PDF & CSV.
 
-## About Laravel
+Dibangun **tanpa folder `public`** — dokumen root langsung di root project,
+sehingga cukup di-unzip ke `public_html` pada cPanel.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 1. Akun Contoh
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Setelah menjalankan seeder, gunakan akun berikut.
 
-## Learning Laravel
+| Peran | Masuk lewat | Username | Kata sandi | PIN |
+|---|---|---|---|---|
+| Owner | `/admin/login` | `owner` | `owner123` | 9999 |
+| Supervisor | `/admin/login` | `supervisor` | `super123` | 4321 |
+| Kasir 1 | `/pos/login` | `kasir1` | `kasir123` | 1234 |
+| Kasir 2 | `/pos/login` | `kasir2` | `kasir123` | 5678 |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+> **Ganti seluruh kata sandi dan PIN ini sebelum dipakai sungguhan.**
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 2. Alur Aplikasi
 
-## Laravel Sponsors
+| URL | Untuk siapa | Keterangan |
+|---|---|---|
+| `/` | Umum | Halaman pemilihan: Terminal Kasir atau Dashboard |
+| `/pos/login` | Operator | Login kasir — **terpisah** dari dashboard |
+| `/pos` | Operator | Terminal transaksi (wajib shift terbuka) |
+| `/admin/login` | Owner & Supervisor | Login dashboard |
+| `/dashboard` | Owner & Supervisor | Dashboard pengelola |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Kasir **tidak dapat** membuka `/dashboard` — jika mencoba, ia dikembalikan ke
+halaman login dashboard. Sebaliknya, login di terminal kasir tidak memberikan
+sesi dashboard sama sekali (dua guard terpisah: `pos` dan `web`).
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## 3. Peran & Hak Akses
 
-## Contributing
+| Kemampuan | Owner | Supervisor | Kasir |
+|---|:--:|:--:|:--:|
+| Terminal kasir & cetak struk | ✅ | ✅ | ✅ |
+| Shift sendiri (buka/tutup laci) | ✅ | ✅ | ✅ |
+| Dashboard pengelola | ✅ | ✅ | ❌ |
+| Produk, kategori, stok, opname | ✅ | ✅ | ❌ |
+| Pelanggan | ✅ | ✅ | ❌ |
+| Seluruh laporan + ekspor PDF/CSV | ✅ | ✅ | ❌ |
+| Lihat modal & laba | ✅ | ✅ | ❌ |
+| Setujui pembatalan (void) | ✅ | ✅ | ❌ |
+| Lihat semua shift kasir | ✅ | ✅ | ❌ |
+| Log aktivitas (audit) | ✅ | ✅ | ❌ |
+| Manajemen pengguna & peran | ✅ | ❌ | ❌ |
+| Pengaturan toko, pajak, struk | ✅ | ❌ | ❌ |
+| Mekanisme ID produk | ✅ | ❌ | ❌ |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Pembatalan transaksi di terminal kasir **wajib** disetujui dengan PIN Owner atau
+Supervisor — kasir tidak bisa membatalkan transaksinya sendiri.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 4. Mekanisme ID Produk
 
-## Security Vulnerabilities
+Diatur di **Dashboard → Pengaturan → Mekanisme ID Produk**. ID dibentuk dari
+empat segmen yang bisa dinyalakan/dimatikan:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+PREFIX  -  KODE KATEGORI  -  TANGGAL  -  NOMOR URUT
+ KSJ    -      KOP        -   2608    -    0001      →  KSJ-KOP-2608-0001
+```
 
-## License
+- **Prefix** — bebas, misal `KSJ`. Kosongkan untuk melewati.
+- **Kode kategori** — diambil dari kolom *Kode ID* pada tiap kategori.
+- **Tanggal** — tanpa tanggal / `YY` / `YYMM` / `YYMMDD`.
+- **Nomor urut** — panjang digit bebas, dibagikan secara aman (row lock) sehingga
+  dua produk tidak akan pernah mendapat nomor sama.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Setiap produk yang tersimpan **otomatis** memperoleh:
+
+1. **ID produk (SKU)** sesuai pola di atas,
+2. **Barcode** — `Code 128` (isi = ID produk) atau `EAN-13` (13 digit, prefix
+   internal `2` sesuai standar GS1, lengkap dengan check digit),
+3. **QR Code** berisi ID produk sehingga langsung bisa dipindai di kasir.
+
+Cetak label massal lewat **Produk → Cetak Label** (lembar A4, 4 kolom). Untuk
+mencetak salinan lebih banyak: `/dashboard/products/labels?copies=12`.
+
+---
+
+## 5. Laporan
+
+Sepuluh laporan, semuanya dengan rentang tanggal bebas dan tombol **Export PDF**
+serta **CSV**:
+
+Ringkasan Penjualan · Detail Transaksi · Penjualan per Produk ·
+Penjualan per Kategori · Kinerja Kasir · Metode Pembayaran ·
+Laba & Margin · Nilai Persediaan · Rekap Shift Kasir · Transaksi Dibatalkan
+
+Selain itu tersedia: **Invoice PDF** per transaksi dan **Laporan Tutup Shift PDF**
+(lengkap dengan kolom tanda tangan kasir & supervisor).
+
+---
+
+## 6. Deploy ke cPanel
+
+Aplikasi ini **tidak memakai folder `public`**. Seluruh isi ZIP langsung
+diletakkan di `public_html` (atau folder domain/subdomain Anda).
+
+1. **Upload & ekstrak**
+   Unggah `kasir-pos-vX.zip` ke `public_html`, klik *Extract*.
+   Pastikan `index.php` dan `.htaccess` berada langsung di dalam `public_html`.
+
+2. **Buat database MySQL**
+   cPanel → *MySQL Databases* → buat database + user, beri **ALL PRIVILEGES**.
+
+3. **Atur `.env`**
+   File `.env` sudah disertakan. Sesuaikan minimal:
+   ```
+   APP_URL=https://domain-anda.com
+   DB_DATABASE=nama_database
+   DB_USERNAME=user_database
+   DB_PASSWORD=kata_sandi
+   ```
+
+4. **Set versi PHP ke 8.2+**
+   cPanel → *MultiPHP Manager*. Ekstensi wajib: `pdo_mysql`, `mbstring`,
+   `openssl`, `gd`, `dom`, `fileinfo`, `zip`.
+
+5. **Jalankan migrasi**
+   Lewat *Terminal* cPanel:
+   ```bash
+   cd ~/public_html
+   php artisan key:generate      # hanya jika APP_KEY kosong
+   php artisan migrate --force
+   php artisan db:seed --force   # opsional: data contoh + akun
+   php artisan optimize
+   ```
+
+   Bila Terminal tidak tersedia, gunakan *Setup Node/PHP App* atau impor SQL
+   secara manual lewat phpMyAdmin.
+
+6. **Izin folder**
+   `storage/` dan `uploads/` harus dapat ditulis (`755`, atau `775` bila perlu).
+
+7. **Selesai** — buka `https://domain-anda.com`.
+
+### Catatan keamanan
+
+`.htaccess` di root sudah memblokir akses langsung ke `app/`, `config/`,
+`database/`, `routes/`, `storage/`, `vendor/`, `.env`, dan file sensitif lain,
+karena folder-folder tersebut kini berada di bawah dokumen root. **Jangan hapus
+atau timpa file `.htaccess` tersebut.**
+
+File yang diunggah pengguna disimpan di `uploads/` dan tidak dapat dieksekusi
+sebagai PHP (`uploads/.htaccess`).
+
+---
+
+## 7. Menjalankan di Lokal
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+# sesuaikan DB_* di .env
+php artisan migrate --seed
+php artisan serve
+```
+
+Tidak ada langkah `npm`/build — CSS dan JavaScript ditulis langsung di
+`assets/` tanpa bundler, supaya deploy cukup dengan unzip.
+
+### Menjalankan test
+
+```bash
+# buat dulu databasenya sekali saja
+mysql -u root -e "CREATE DATABASE kasir_pos_test"
+php artisan test
+```
+
+39 test mencakup: pemisahan peran & guard, perhitungan checkout (pajak,
+diskon, pembulatan, split payment), pengurangan stok, penomoran invoice,
+pembatalan transaksi, pembuatan ID/barcode/QR, dan ekspor laporan.
+
+---
+
+## 8. Pintasan Keyboard di Terminal Kasir
+
+| Tombol | Fungsi |
+|---|---|
+| `F2` | Fokus ke kolom pindai barcode |
+| `F4` | Buka dialog pembayaran |
+| `F9` | Tahan transaksi (parkir keranjang) |
+| `Enter` | Di dialog bayar: selesaikan transaksi |
+| `Esc` | Tutup dialog |
+
+Kolom pindai selalu merebut fokus kembali, sehingga scanner barcode
+(yang bekerja seperti keyboard) langsung berfungsi tanpa klik.
+
+---
+
+## 9. Struktur Penting
+
+```
+index.php              front controller (dokumen root)
+.htaccess              rewrite + proteksi folder framework
+assets/css|js          design system & runtime, tanpa build step
+uploads/               file unggahan (logo, gambar produk)
+app/Support/Role.php   matriks peran & izin
+app/Services/          SkuGenerator, CodeImageService, CheckoutService,
+                       StockService, ReportService
+resources/views/pos/   terminal kasir
+resources/views/print/ struk termal, invoice PDF, laporan PDF
+```
+
+---
+
+## 10. Catatan Teknis
+
+- **Perhitungan harga selalu dihitung ulang di server.** Nominal yang dikirim
+  browser hanya untuk tampilan; harga diambil dari database saat checkout.
+- **Stok hanya berubah lewat ledger** (`stock_movements`), mencatat saldo
+  sebelum dan sesudah, sehingga selalu dapat diaudit.
+- **Modal & laba di-snapshot** pada tiap transaksi, sehingga perubahan harga
+  modal di kemudian hari tidak mengubah laporan laba masa lalu.
+- **Multi-tenant**: seluruh data terikat pada `tenant_id` dengan global scope,
+  siap dikembangkan menjadi multi-outlet.
+- Laravel 11 masih memiliki dua advisory keamanan yang perbaikannya hanya
+  tersedia di Laravel 12+ (CRLF pada aturan validasi `email`, dan signed URL).
+  Keduanya tidak dipakai aplikasi ini, namun pertimbangkan upgrade bila nanti
+  menambahkan fitur email atau tautan bertanda tangan.
