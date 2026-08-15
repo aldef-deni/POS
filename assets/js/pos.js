@@ -40,6 +40,7 @@
         grid: root.querySelector('[data-grid]'),
         rail: root.querySelector('[data-rail]'),
         scan: root.querySelector('[data-scan]'),
+        search: root.querySelector('[data-search]'),
         lines: root.querySelector('[data-lines]'),
         totals: root.querySelector('[data-totals]'),
         // Two of these exist — the desktop header and the mobile sheet
@@ -386,40 +387,85 @@
 
     /* --- Barcode scanning -------------------------------------------------- */
 
+    /**
+     * Resolve whatever landed in the scan box.
+     *
+     * The field accepts two very different things: an exact code typed by a
+     * hardware scanner, and a product name typed by a person. Both have to
+     * work, so exact codes are tried first, then names. An ambiguous name is
+     * never guessed at — the grid is narrowed so the cashier picks.
+     */
     function handleScan(code) {
         code = code.trim();
         if (!code) return;
 
-        // Try the preloaded catalogue first — no round trip for a hit.
-        const local = state.products.find(
+        // 1. Exact code, straight from the preloaded catalogue — no round trip.
+        const exact = state.products.find(
             (p) => p.barcode === code || p.sku === code
         );
 
-        if (local) {
-            addProduct(local);
+        if (exact) {
+            addProduct(exact);
             el.scan.value = '';
             return;
         }
 
+        // 2. A typed name, matched against the same slice.
+        const term = code.toLowerCase();
+        const byName = state.products.filter(
+            (p) => p.name.toLowerCase().includes(term)
+        );
+
+        if (byName.length === 1) {
+            addProduct(byName[0]);
+            el.scan.value = '';
+            return;
+        }
+
+        if (byName.length > 1) {
+            narrowTo(code);
+            window.posToast(byName.length + ' produk cocok dengan "' + code + '". Pilih dari daftar.');
+            el.scan.value = '';
+            return;
+        }
+
+        // 3. Nothing here — the catalogue may be bigger than the slice held.
         fetch(CFG.urls.lookup + '?code=' + encodeURIComponent(code), {
             headers: { 'Accept': 'application/json' },
         })
             .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
             .then(({ ok, data }) => {
+                if (data.ambiguous) {
+                    (data.products || []).forEach(cacheProduct);
+                    narrowTo(code);
+                    window.posToast(data.message);
+                    return;
+                }
+
                 if (!ok || !data.found) {
                     window.posToast(data.message || 'Produk tidak ditemukan.', 'bad');
                     return;
                 }
 
-                // Cache it so the next scan of this item is instant.
-                if (!state.products.some((p) => p.id === data.product.id)) {
-                    state.products.push(data.product);
-                }
-
+                cacheProduct(data.product);
                 addProduct(data.product);
             })
             .catch(() => window.posToast('Gagal menghubungi server.', 'bad'))
             .finally(() => { el.scan.value = ''; });
+    }
+
+    /** Keep a product the server returned, so the next scan of it is instant. */
+    function cacheProduct(product) {
+        if (!state.products.some((p) => p.id === product.id)) {
+            state.products.push(product);
+        }
+    }
+
+    /** Filter the grid to a term and mirror it into the filter box. */
+    function narrowTo(term) {
+        state.term = term;
+        if (el.search) el.search.value = term;
+        renderGrid();
     }
 
     /* --- Payment ---------------------------------------------------------- */

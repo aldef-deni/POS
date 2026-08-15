@@ -102,8 +102,21 @@
     font-size: 14.5px;
     border-radius: var(--r-md);
 }
-.pos-scan__icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--brand-600); }
-.pos-scan__hint { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+/* Both decorations sit on top of the field, so they must be transparent to
+   the pointer. Without this a tap on the icon or the F2 badge lands on the
+   decoration instead of the input — and on a touch screen the on-screen
+   keyboard then never opens. */
+.pos-scan__icon {
+    position: absolute; left: 13px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--brand-600);
+    pointer-events: none;
+}
+.pos-scan__hint {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
 
 .pos-grid {
     flex: 1;

@@ -90,14 +90,18 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'username' => ['required', 'string', 'max:60', 'alpha_dash', Rule::unique('users', 'username')->ignore($user->id)],
             'email' => ['required', 'email', 'max:120', Rule::unique('users', 'email')->ignore($user->id)],
-            'role' => ['required', Rule::enum(Role::class)],
+            // Editing your own account leaves the role controls disabled, so
+            // the field is only demanded when changing somebody else. Either
+            // way the value is forced back below for self-edits.
+            'role' => [Rule::requiredIf($user->id !== $request->user()->id), Rule::enum(Role::class)],
             'outlet_id' => ['required', 'string'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'pos_pin' => ['nullable', 'digits_between:4,8'],
             'phone' => ['nullable', 'string', 'max:40'],
         ], [
             'outlet_id.required' => 'Outlet penempatan wajib dipilih.',
-        ], ['outlet_id' => 'outlet']);
+            'role.required' => 'Peran wajib dipilih.',
+        ], ['outlet_id' => 'outlet', 'role' => 'peran']);
 
         // Blank fields mean "leave the existing secret alone".
         foreach (['password', 'pos_pin'] as $secret) {
@@ -106,7 +110,10 @@ class UserController extends Controller
             }
         }
 
-        $data['outlet_id'] = $this->resolveOutlet($data['outlet_id'], $data['role']);
+        $data['outlet_id'] = $this->resolveOutlet(
+            $data['outlet_id'],
+            $data['role'] ?? $user->role->value,
+        );
         $data['is_active'] = $request->boolean('is_active');
 
         // Never let an Owner lock themselves out of their own account.

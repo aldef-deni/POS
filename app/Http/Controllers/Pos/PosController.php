@@ -50,10 +50,12 @@ class PosController extends Controller
     }
 
     /**
-     * Resolve a scanned barcode / QR payload to exactly one product.
+     * Resolve what the operator put in the scan box.
      *
-     * The hardware scanner types the code and presses Enter, so this has to
-     * match on the barcode, the SKU, or the QR payload.
+     * A hardware scanner types an exact code and presses Enter, but the field
+     * also invites a typed product name, so both have to work: exact code
+     * first, then a name search. An ambiguous name returns the candidates
+     * rather than guessing which one was meant.
      */
     public function lookup(Request $request): JsonResponse
     {
@@ -71,17 +73,45 @@ class PosController extends Controller
             })
             ->first();
 
-        if (! $product) {
+        if ($product) {
+            return response()->json([
+                'found' => true,
+                'matched_by' => 'code',
+                'product' => $this->transform($product),
+            ]);
+        }
+
+        // Nothing matched exactly — try the name, which is what the
+        // placeholder promises the cashier they can do.
+        $matches = Product::with('category')
+            ->active()
+            ->search($code)
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        if ($matches->count() === 1) {
+            return response()->json([
+                'found' => true,
+                'matched_by' => 'name',
+                'product' => $this->transform($matches->first()),
+            ]);
+        }
+
+        if ($matches->count() > 1) {
             return response()->json([
                 'found' => false,
-                'message' => "Produk dengan kode {$code} tidak ditemukan.",
-            ], 404);
+                'ambiguous' => true,
+                'count' => $matches->count(),
+                'message' => "Ada {$matches->count()} produk cocok dengan \"{$code}\". Pilih dari daftar.",
+                'products' => $matches->map(fn (Product $p) => $this->transform($p))->all(),
+            ]);
         }
 
         return response()->json([
-            'found' => true,
-            'product' => $this->transform($product),
-        ]);
+            'found' => false,
+            'message' => "Produk \"{$code}\" tidak ditemukan.",
+        ], 404);
     }
 
     public function customers(Request $request): JsonResponse

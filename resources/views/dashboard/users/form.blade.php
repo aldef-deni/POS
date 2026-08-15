@@ -158,11 +158,21 @@
             <div class="card">
                 <div class="card__head"><div class="card__title">Peran &amp; Akses</div></div>
                 <div class="card__body">
+                    @php $editingSelf = $user->exists && $user->id === auth('web')->id(); @endphp
+
+                    @if ($editingSelf)
+                        {{-- The radios below are disabled so nobody demotes
+                             themselves, but a disabled input submits nothing —
+                             without this the form would fail validation and no
+                             edit to your own account could ever be saved. --}}
+                        <input type="hidden" name="role" value="{{ $user->role->value }}">
+                    @endif
+
                     @foreach ($roles as $role)
                         <label class="check mb-16" style="align-items:flex-start">
                             <input type="radio" name="role" value="{{ $role->value }}" data-role-radio
                                    @checked(old('role', $user->role?->value ?? 'Kasir') === $role->value)
-                                   @disabled($user->exists && $user->id === auth('web')->id())>
+                                   @disabled($editingSelf)>
                             <span>
                                 <span class="check__text semi">{{ $role->label() }}</span>
                                 <span class="check__hint" style="display:block;margin-top:2px">{{ $role->description() }}</span>
@@ -170,7 +180,7 @@
                         </label>
                     @endforeach
 
-                    @if ($user->exists && $user->id === auth('web')->id())
+                    @if ($editingSelf)
                         <div class="alert alert--info" style="margin:0">
                             <x-icon name="shield" size="16" class="alert__icon"/>
                             <div>Anda tidak dapat mengubah peran akun sendiri.</div>
@@ -185,7 +195,7 @@
                     <label class="switch">
                         <input type="checkbox" name="is_active" value="1"
                                @checked(old('is_active', $user->exists ? $user->is_active : true))
-                               @disabled($user->exists && $user->id === auth('web')->id())>
+                               @disabled($editingSelf)>
                         <span class="switch__track"></span>
                         <span class="check__text">Akun aktif</span>
                     </label>

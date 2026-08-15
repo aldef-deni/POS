@@ -291,12 +291,61 @@ class PosCheckoutTest extends PosTestCase
 
         $this->getJson('/pos/lookup?code='.$product->barcode_value)
             ->assertOk()
-            ->assertJson(['found' => true])
+            ->assertJson(['found' => true, 'matched_by' => 'code'])
             ->assertJsonPath('product.id', $product->id);
 
         $this->getJson('/pos/lookup?code=TIDAK-ADA')
             ->assertNotFound()
             ->assertJson(['found' => false]);
+    }
+
+    public function test_lookup_finds_a_product_by_typed_name(): void
+    {
+        // The scan box invites a product name, so a name must resolve — not
+        // only the exact barcode a scanner would send.
+        $product = $this->makeProduct(['name' => 'Roti Bakar Cokelat']);
+        $this->openShift();
+        $this->actingAs($this->kasir, 'pos');
+
+        $this->getJson('/pos/lookup?code=Roti Bakar')
+            ->assertOk()
+            ->assertJson(['found' => true, 'matched_by' => 'name'])
+            ->assertJsonPath('product.id', $product->id);
+    }
+
+    public function test_lookup_by_name_is_case_insensitive(): void
+    {
+        $product = $this->makeProduct(['name' => 'Americano']);
+        $this->openShift();
+        $this->actingAs($this->kasir, 'pos');
+
+        $this->getJson('/pos/lookup?code=americano')
+            ->assertOk()
+            ->assertJsonPath('product.id', $product->id);
+    }
+
+    public function test_ambiguous_name_returns_candidates_instead_of_guessing(): void
+    {
+        $this->makeProduct(['name' => 'Kopi Susu Gula Aren']);
+        $this->makeProduct(['name' => 'Kopi Hitam']);
+        $this->openShift();
+        $this->actingAs($this->kasir, 'pos');
+
+        $response = $this->getJson('/pos/lookup?code=Kopi');
+
+        $response->assertOk()
+            ->assertJson(['found' => false, 'ambiguous' => true, 'count' => 2]);
+
+        // Picking one of two silently would ring up the wrong item.
+        $this->assertCount(2, $response->json('products'));
+    }
+
+    public function test_lookup_rejects_an_empty_term(): void
+    {
+        $this->openShift();
+        $this->actingAs($this->kasir, 'pos');
+
+        $this->getJson('/pos/lookup?code=')->assertStatus(422);
     }
 
     public function test_receipt_is_printable_after_the_sale(): void
