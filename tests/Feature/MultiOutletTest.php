@@ -301,6 +301,62 @@ class MultiOutletTest extends PosTestCase
             'a cashier mid-shift must not be moved between branches');
     }
 
+    public function test_owner_can_edit_their_own_details(): void
+    {
+        // The role controls are disabled when editing yourself, and a
+        // disabled input submits nothing — so the form has to carry the role
+        // another way or no self-edit could ever be saved.
+        $this->actingAs($this->owner, 'web');
+
+        $this->put("/dashboard/users/{$this->owner->id}", [
+            'name' => 'Nama Baru',
+            'username' => $this->owner->username,
+            'email' => $this->owner->email,
+            'phone' => '081200000000',
+            'outlet_id' => 'all',
+            'is_active' => '1',
+            // role deliberately absent, exactly as the browser sends it
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->owner->refresh();
+
+        $this->assertSame('Nama Baru', $this->owner->name);
+        $this->assertSame('081200000000', $this->owner->phone);
+    }
+
+    public function test_editing_yourself_cannot_change_your_own_role(): void
+    {
+        $this->actingAs($this->owner, 'web');
+
+        // Even a hand-crafted request must not demote the signed-in Owner.
+        $this->put("/dashboard/users/{$this->owner->id}", [
+            'name' => $this->owner->name,
+            'username' => $this->owner->username,
+            'email' => $this->owner->email,
+            'role' => Role::Kasir->value,
+            'outlet_id' => (string) $this->outletA->id,
+            'is_active' => '',
+        ])->assertRedirect();
+
+        $this->owner->refresh();
+
+        $this->assertSame(Role::Owner, $this->owner->role);
+        $this->assertTrue($this->owner->is_active, 'you must not deactivate yourself');
+    }
+
+    public function test_editing_another_operator_still_requires_a_role(): void
+    {
+        $this->actingAs($this->owner, 'web');
+
+        $this->put("/dashboard/users/{$this->kasir->id}", [
+            'name' => $this->kasir->name,
+            'username' => $this->kasir->username,
+            'email' => $this->kasir->email,
+            'outlet_id' => (string) $this->outletA->id,
+            'is_active' => '1',
+        ])->assertSessionHasErrors('role');
+    }
+
     // --- Switching branches on the dashboard ------------------------------
 
     public function test_owner_can_switch_the_dashboard_between_branches(): void
