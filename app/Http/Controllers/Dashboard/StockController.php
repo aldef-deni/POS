@@ -93,6 +93,132 @@ class StockController extends Controller
             .qty_label($product->stockAt($outletId)).' '.$product->unit.'.');
     }
 
+    /**
+     * Receiving goods into a branch.
+     *
+     * The adjustment dialog handles one product at a time, which is fine for
+     * a correction but painful for a delivery — or for a newly opened branch
+     * whose whole catalogue sits at zero. This screen takes quantities for
+     * many products in one pass.
+     */
+    public function restock(Request $request): View
+    {
+        $outlet = app(OutletContext::class)->get();
+        $filter = $request->query('show', 'need');
+
+        $products = Product::with([
+            'category',
+            'outletStocks' => fn ($q) => $q->withoutGlobalScope('outlet'),
+        ])
+            ->active()
+            ->where('track_stock', true)
+            ->search($request->query('q'))
+            ->orderBy('name')
+            ->get()
+            ->map(function (Product $product) use ($outlet) {
+                $onHand = $product->stockAt($outlet?->id);
+                $minimum = $product->minStockAt($outlet?->id);
+
+                $product->setAttribute('on_hand', $onHand);
+                $product->setAttribute('minimum', $minimum);
+                $product->setAttribute('stock_status', $onHand <= 0
+                    ? 'habis'
+                    : ($onHand <= $minimum ? 'menipis' : 'aman'));
+
+                return $product;
+            });
+
+        // Empty shelves first: those are what stop a sale today.
+        $ordered = $products->sortBy(fn ($p) => match ($p->stock_status) {
+            'habis' => 0,
+            'menipis' => 1,
+            default => 2,
+        })->values();
+
+        return view('dashboard.stock.restock', [
+            'products' => $filter === 'all'
+                ? $ordered
+                : $ordered->where('stock_status', '!=', 'aman')->values(),
+            'counts' => [
+                'habis' => $products->where('stock_status', 'habis')->count(),
+                'menipis' => $products->where('stock_status', 'menipis')->count(),
+                'aman' => $products->where('stock_status', 'aman')->count(),
+            ],
+            'stockValue' => (float) $products->sum(fn ($p) => $p->on_hand * (float) $p->cost_price),
+            'activeOutlet' => $outlet,
+            'filters' => ['q' => $request->query('q'), 'show' => $filter],
+        ]);
+    }
+
+    /** Record the delivery: one stock movement per product received. */
+    public function storeRestock(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'qty' => ['required', 'array'],
+            'qty.*' => ['nullable', 'numeric', 'min:0'],
+            'note' => ['nullable', 'string', 'max:191'],
+        ], [], ['qty' => 'jumlah masuk']);
+
+        $outletId = app(OutletContext::class)->id();
+
+        if (! $outletId) {
+            return back()->with('error',
+                'Restok dilakukan per outlet. Pilih outlet terlebih dahulu pada pemilih di bagian atas.');
+        }
+
+        // `nullable` leaves the key out entirely when the field is not
+        // submitted, so reaching for it directly would fatal.
+        $note = ($data['note'] ?? null) ?: 'Penerimaan barang '.now()->format('d/m/Y');
+
+        $received = 0;
+        $totalQty = 0.0;
+
+        foreach ($data['qty'] as $productId => $qty) {
+            $qty = (float) $qty;
+
+            if ($qty <= 0) {
+                continue;
+            }
+
+            $product = Product::find($productId);
+
+            if (! $product) {
+                continue;
+            }
+
+            $this->stock->apply(
+                $product,
+                $qty,
+                'in',
+                null,
+                $note,
+                $request->user()->id,
+                $outletId,
+            );
+
+            $received++;
+            $totalQty += $qty;
+        }
+
+        if ($received === 0) {
+            return back()->with('error', 'Belum ada jumlah yang diisi. Isi kolom "Jumlah Masuk" minimal satu produk.');
+        }
+
+        $outletName = app(OutletContext::class)->name();
+
+        ActivityLog::record(
+            'stock.restock',
+            "Restok {$outletName}: {$received} produk, total ".qty_label($totalQty).' unit',
+            null,
+            ['outlet_id' => $outletId, 'products' => $received, 'qty' => $totalQty],
+        );
+
+        return redirect()
+            ->route('admin.stock.restock')
+            ->with('status', "Restok tersimpan: {$received} produk bertambah "
+                .qty_label($totalQty).' unit di '.$outletName.'.');
+    }
+
     public function opname(Request $request): View
     {
         return view('dashboard.stock.opname', [

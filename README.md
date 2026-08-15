@@ -110,6 +110,30 @@ sendiri; menjual barang yang stoknya ada di cabang lain akan ditolak.
 Penyesuaian stok dan stok opname juga per outlet — tombolnya nonaktif bila
 tampilan sedang "Semua Outlet", karena stok harus punya tujuan yang jelas.
 
+### Cara restok produk yang habis
+
+**Dashboard → Stok & Inventori → Restok Produk**, atau tombol **Restok** pada
+kartu *Stok Menipis* di dashboard.
+
+1. Pilih outlet tujuan di pemilih kanan atas (stok selalu masuk ke satu cabang).
+2. Halaman terbuka pada tab **Perlu Restok** — produk **Habis** tampil paling
+   atas, disusul yang **Menipis**.
+3. Isi kolom **Jumlah Masuk**. Kolom *Stok Setelah* memperbarui diri seketika,
+   jadi hasilnya terlihat sebelum disimpan.
+4. Untuk mengisi banyak produk sekaligus: atur *Isi otomatis sampai* **2×
+   minimum**, lalu tekan **Terapkan**.
+5. Isi catatan bila perlu (mis. nomor faktur supplier), lalu **Simpan Restok**.
+
+Semua produk tersimpan dalam satu langkah, dan masing-masing menghasilkan satu
+baris di buku besar stok lengkap dengan saldo sebelum dan sesudah.
+
+> **Outlet baru selalu mulai dari stok nol.** Katalog produknya sudah ada,
+> tetapi rak cabang itu masih kosong. Buka Restok Produk → tab **Semua Produk**
+> → **Terapkan** untuk mengisinya sekaligus.
+
+Untuk koreksi satu produk (barang rusak, salah hitung), gunakan **Penyesuaian
+Stok**; untuk mencocokkan dengan hitungan fisik, gunakan **Stok Opname**.
+
 ### Nomor invoice memuat kode outlet
 
 ```

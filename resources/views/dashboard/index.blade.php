@@ -223,9 +223,9 @@
                 <div class="card__title">Stok Menipis</div>
                 <div class="card__sub">Produk yang perlu segera diisi ulang</div>
             </div>
-            @allow('stock.view')
-                <a href="{{ route('admin.stock.index') }}" class="btn btn--ghost btn--sm">
-                    Kelola stok <x-icon name="chevron-right" size="14"/>
+            @allow('stock.adjust')
+                <a href="{{ route('admin.stock.restock') }}" class="btn btn--soft btn--sm">
+                    <x-icon name="boxes" size="14"/> Restok
                 </a>
             @endallow
         </div>

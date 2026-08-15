@@ -85,6 +85,8 @@ Route::middleware('dashboard.auth')->prefix('dashboard')->name('admin.')->group(
 
     Route::middleware('can.do:stock.adjust')->group(function () {
         Route::post('/stock/adjust', [StockController::class, 'adjust'])->name('stock.adjust');
+        Route::get('/stock/restock', [StockController::class, 'restock'])->name('stock.restock');
+        Route::post('/stock/restock', [StockController::class, 'storeRestock'])->name('stock.restock.store');
         Route::post('/stock/opname', [StockController::class, 'storeOpname'])->name('stock.opname.store');
     });
 

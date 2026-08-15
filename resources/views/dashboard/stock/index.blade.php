@@ -22,6 +22,11 @@
             <x-icon name="layers" size="16"/> Stok Opname
         </a>
         @allow('stock.adjust')
+            <a href="{{ route('admin.stock.restock') }}" class="btn btn--success">
+                <x-icon name="boxes" size="16"/> Restok Produk
+            </a>
+        @endallow
+        @allow('stock.adjust')
             {{-- Adjusting needs a destination branch, so the control is
                  disabled rather than failing after the fact. --}}
             <button type="button" class="btn btn--primary {{ $activeOutlet ? '' : 'is-disabled' }}"
@@ -47,6 +52,12 @@
             </div>
         </div>
         <div class="card__body card__body--tight">
+            @allow('stock.adjust')
+                <a href="{{ route('admin.stock.restock') }}" class="btn btn--success btn--sm mb-12">
+                    <x-icon name="boxes" size="15"/> Restok Sekarang
+                </a>
+            @endallow
+
             <div class="row g-8 wrap">
                 @foreach ($lowStock as $product)
                     @php $onHand = $product->stockAt($activeOutlet?->id); @endphp
