@@ -101,7 +101,13 @@
                     <div class="operator-strip mb-16">
                         @foreach ($operators as $operator)
                             <button type="button" class="operator" data-operator="{{ $operator->id }}">
-                                <span class="avatar">{{ $operator->initials() }}</span>
+                                <span class="avatar">
+                                    @if ($operator->avatarUrl())
+                                        <img src="{{ $operator->avatarUrl() }}" alt="">
+                                    @else
+                                        {{ $operator->initials() }}
+                                    @endif
+                                </span>
                                 <span class="operator__name">{{ $operator->name }}</span>
                             </button>
                         @endforeach

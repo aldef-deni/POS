@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\PosAuthController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Pos\PosController;
 use App\Http\Controllers\Pos\PosSaleController;
 use App\Http\Controllers\Pos\PosShiftController;
@@ -51,6 +52,16 @@ Route::prefix('pos')->name('pos.')->group(function () {
             Route::get('/hold', [PosSaleController::class, 'heldList'])->name('hold.list');
             Route::delete('/hold/{heldOrder}', [PosSaleController::class, 'releaseHold'])->name('hold.release');
         });
+
+        // --- Own account ---------------------------------------------------
+        // Deliberately outside the open-shift guard: a cashier must be able
+        // to change their PIN before the drawer is opened.
+        Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+        Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.destroy');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+        Route::put('/profile/pin', [ProfileController::class, 'updatePin'])->name('profile.pin');
 
         // --- After the sale ------------------------------------------------
         Route::get('/receipt/{sale}', [PosSaleController::class, 'receipt'])->name('receipt');

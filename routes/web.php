@@ -14,6 +14,7 @@ use App\Http\Controllers\Dashboard\ShiftController;
 use App\Http\Controllers\Dashboard\StockController;
 use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'landing')->name('landing');
@@ -122,6 +123,15 @@ Route::middleware('dashboard.auth')->prefix('dashboard')->name('admin.')->group(
             ->where('report', 'summary|sales|products|categories|cashiers|payments|profit|inventory|shifts|voids')
             ->where('format', 'pdf|csv');
     });
+
+    // --- Own account ---------------------------------------------------
+    // No permission gate: everyone who reaches the dashboard owns a profile.
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::delete('/profile/avatar', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.destroy');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::put('/profile/pin', [ProfileController::class, 'updatePin'])->name('profile.pin');
 
     // --- Administration ------------------------------------------------
     // --- Branches ------------------------------------------------------

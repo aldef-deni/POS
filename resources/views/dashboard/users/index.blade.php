@@ -64,7 +64,13 @@
                     <tr>
                         <td>
                             <div class="row g-10">
-                                <span class="avatar avatar--sm">{{ $user->initials() }}</span>
+                                <span class="avatar avatar--sm">
+                                    @if ($user->avatarUrl())
+                                        <img src="{{ $user->avatarUrl() }}" alt="">
+                                    @else
+                                        {{ $user->initials() }}
+                                    @endif
+                                </span>
                                 <div>
                                     <div class="semi">{{ $user->name }}</div>
                                     @if ($user->id === auth('web')->id())

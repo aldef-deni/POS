@@ -135,7 +135,47 @@ serta kontribusi tiap cabang.
 
 ---
 
-## 5. Mekanisme ID Produk
+## 5. Profil Pengguna
+
+Setiap pengguna — Owner, Supervisor, **dan Kasir** — punya halaman profilnya
+sendiri:
+
+| Peran | Dibuka lewat |
+|---|---|
+| Owner & Supervisor | Menu akun kanan atas → **Profil Saya** |
+| Kasir | Menu terminal → **Profil Saya** (juga tersedia di layar Buka Shift) |
+
+Halaman kasir sengaja diletakkan **di luar penjagaan shift**, supaya kasir bisa
+mengganti PIN-nya sebelum membuka laci.
+
+Yang bisa diubah sendiri: **nama, username, email, telepon, foto profil, kata
+sandi, dan PIN**.
+
+Yang **tidak** bisa diubah sendiri: **peran dan outlet**. Keduanya keputusan
+Owner — kalau bisa diubah sendiri, seluruh model hak akses jadi tidak berarti.
+Ditampilkan sebagai informasi saja.
+
+### Foto profil
+
+- Format JPG, PNG, atau WEBP, maksimal 4 MB
+- Dipotong persegi dan diperkecil otomatis ke **320×320** — foto ponsel 4 MP
+  yang disimpan apa adanya akan dikirim ulang di setiap halaman yang
+  menampilkan chip avatar kecil
+- File lama dihapus saat diganti, jadi folder `uploads/` tidak menumpuk
+- Foto muncul di topbar dashboard, daftar pengguna, layar pilih operator di
+  terminal, dan layar buka shift
+
+### Keamanan
+
+- Ganti kata sandi wajib menyertakan **kata sandi saat ini**
+- Ganti PIN wajib menyertakan **PIN saat ini** (kasir hanya tahu PIN-nya,
+  bukan kata sandinya). Yang belum punya PIN bisa mengaturnya langsung.
+- Semua rute profil bekerja pada **pengguna yang sedang masuk** — tidak ada
+  ID pengguna di URL, sehingga tidak ada cara menyentuh profil orang lain
+
+---
+
+## 6. Mekanisme ID Produk
 
 Diatur di **Dashboard → Pengaturan → Mekanisme ID Produk**. ID dibentuk dari
 empat segmen yang bisa dinyalakan/dimatikan:
@@ -163,7 +203,7 @@ mencetak salinan lebih banyak: `/dashboard/products/labels?copies=12`.
 
 ---
 
-## 6. Laporan
+## 7. Laporan
 
 Sepuluh laporan, semuanya dengan rentang tanggal bebas dan tombol **Export PDF**
 serta **CSV**:
@@ -177,7 +217,7 @@ Selain itu tersedia: **Invoice PDF** per transaksi dan **Laporan Tutup Shift PDF
 
 ---
 
-## 7. Deploy ke cPanel
+## 8. Deploy ke cPanel
 
 Aplikasi ini **tidak memakai folder `public`**. Seluruh isi ZIP langsung
 diletakkan di `public_html` (atau folder domain/subdomain Anda).
@@ -232,7 +272,7 @@ sebagai PHP (`uploads/.htaccess`).
 
 ---
 
-## 8. Menjalankan di Lokal
+## 9. Menjalankan di Lokal
 
 ```bash
 composer install
@@ -260,7 +300,7 @@ pembatalan transaksi, pembuatan ID/barcode/QR, dan ekspor laporan.
 
 ---
 
-## 9. Pintasan Keyboard di Terminal Kasir
+## 10. Pintasan Keyboard di Terminal Kasir
 
 | Tombol | Fungsi |
 |---|---|
@@ -275,7 +315,7 @@ Kolom pindai selalu merebut fokus kembali, sehingga scanner barcode
 
 ---
 
-## 10. Struktur Penting
+## 11. Struktur Penting
 
 ```
 index.php              front controller (dokumen root)
@@ -291,7 +331,7 @@ resources/views/print/ struk termal, invoice PDF, laporan PDF
 
 ---
 
-## 11. Catatan Teknis
+## 12. Catatan Teknis
 
 - **Perhitungan harga selalu dihitung ulang di server.** Nominal yang dikirim
   browser hanya untuk tampilan; harga diambil dari database saat checkout.

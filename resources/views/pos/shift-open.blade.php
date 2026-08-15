@@ -13,7 +13,13 @@
     <div class="pos-auth__card" style="max-width:520px;grid-template-columns:1fr">
         <div class="pos-auth__form">
             <div class="row g-12 mb-20">
-                <span class="avatar avatar--lg">{{ $cashier->initials() }}</span>
+                <span class="avatar avatar--lg">
+                    @if ($cashier->avatarUrl())
+                        <img src="{{ $cashier->avatarUrl() }}" alt="">
+                    @else
+                        {{ $cashier->initials() }}
+                    @endif
+                </span>
                 <div>
                     <h1 style="font-size:20px">Halo, {{ explode(' ', $cashier->name)[0] }}</h1>
                     <p class="muted" style="font-size:13px">{{ $cashier->role->label() }} · {{ $tenant?->name }}</p>
@@ -87,6 +93,10 @@
                     <x-icon name="gauge" size="16"/> Buka Dashboard Pengelola
                 </a>
             @endallow
+
+            <a href="{{ route('pos.profile') }}" class="btn btn--ghost btn--block btn--sm mb-8">
+                <x-icon name="user" size="15"/> Profil Saya
+            </a>
 
             <form method="POST" action="{{ route('pos.logout') }}" class="t-center">
                 @csrf

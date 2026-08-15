@@ -25,6 +25,11 @@
 
         <div class="dropdown__sep"></div>
 
+        <a href="{{ route('admin.profile') }}" class="dropdown__item">
+            <x-icon name="user" size="16"/>
+            Profil Saya
+        </a>
+
         <button type="button" class="dropdown__item" data-theme-toggle>
             <x-icon name="moon" size="16"/>
             <span data-theme-label>Mode Gelap</span>

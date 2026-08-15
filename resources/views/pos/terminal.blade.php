@@ -60,6 +60,9 @@
             <div class="dropdown__menu">
                 <div class="dropdown__label">{{ $cashier->name }}</div>
 
+                <a href="{{ route('pos.profile') }}" class="dropdown__item">
+                    <x-icon name="user" size="16"/> Profil Saya
+                </a>
                 <a href="{{ route('pos.history') }}" class="dropdown__item">
                     <x-icon name="history" size="16"/> Riwayat Transaksi
                 </a>

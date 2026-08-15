@@ -49,7 +49,11 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => public_path('uploads'),
-            'url' => rtrim(env('APP_URL', ''), '/').'/uploads',
+            // Root-relative on purpose. An absolute URL built from APP_URL
+            // breaks every uploaded image the moment that value disagrees
+            // with the host actually being browsed — http vs https, or a
+            // www prefix — which is easy to get wrong on shared hosting.
+            'url' => '/uploads',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
