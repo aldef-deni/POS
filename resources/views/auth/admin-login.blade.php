@@ -109,6 +109,18 @@
                     <x-icon name="lock" size="16"/>
                     Masuk
                 </button>
+
+                @if($demoLogin ?? null)
+                    {{-- Kolomnya diisi, bukan langsung dikirim: pemakainya
+                         tetap melihat kredensial yang dipakai. --}}
+                    <button type="button" onclick="isiDemo()"
+                        class="btn btn--ghost btn--lg btn--block" style="margin-top:.75rem">
+                        Coba Demo
+                    </button>
+                    <p class="muted center" style="margin-top:.5rem;font-size:.8rem">
+                        Masuk tanpa mendaftar. Isinya dikembalikan setiap 24 jam.
+                    </p>
+                @endif
             </form>
 
             <div class="divider"></div>
@@ -123,5 +135,14 @@
         </div>
     </div>
 </div>
+@if($demoLogin ?? null)
+<script>
+    function isiDemo() {
+        document.getElementById('login').value = @json($demoLogin);
+        document.getElementById('password').value = @json($demoPassword);
+        document.querySelector('form button[type="submit"]').focus();
+    }
+</script>
+@endif
 </body>
 </html>

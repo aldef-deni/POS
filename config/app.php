@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'ALDEF POS'),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://kasir.dekorasi.me'),
+    'url' => env('APP_URL', 'https://pos.aldeftech.com'),
 
     /*
     |--------------------------------------------------------------------------

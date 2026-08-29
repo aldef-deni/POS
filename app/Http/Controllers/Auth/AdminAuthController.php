@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\DemoResetService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,11 +19,25 @@ class AdminAuthController extends Controller
 {
     public function show(): View
     {
-        return view('auth.admin-login');
+        // Kredensial demo dikirim ke tampilan supaya tombolnya bisa mengisi
+        // kolom. Aman ditampilkan: akun ini memang untuk dicoba siapa saja,
+        // dan isinya dibangun ulang berkala.
+        return view('auth.admin-login', [
+            'demoLogin' => config('demo.username') ?: null,
+            'demoPassword' => config('demo.password'),
+        ]);
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request, DemoResetService $demo): RedirectResponse
     {
+        // Pemulihan demo dijalankan SEBELUM kredensial diperiksa. Kalau
+        // menunggu login berhasil, pengunjung yang mengganti kata sandi akun
+        // demo akan mengunci semua orang - pemulihannya tidak akan pernah
+        // terpicu lagi.
+        if ($demo->cocokDenganDemo($request->input('login'))) {
+            $demo->pulihkanBilaPerlu();
+        }
+
         $credentials = $request->validate([
             'login' => ['required', 'string', 'max:120'],
             'password' => ['required', 'string'],
