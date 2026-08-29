@@ -463,6 +463,10 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
     white-space: nowrap;
     transition: background .14s ease, border-color .14s ease, box-shadow .14s ease, transform .06s ease;
 }
+/* An icon keeps its size when the row runs out of room; only the label may
+   give ground. Without this a squeezed header renders half a glyph. */
+.btn > svg { flex: 0 0 auto; }
+
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible { outline: none; box-shadow: var(--ring); }
 .btn:disabled, .btn.is-disabled { opacity: .5; cursor: not-allowed; transform: none; }
