@@ -83,19 +83,33 @@ sudo /usr/local/bin/pos-deploy.sh
 ## Catatan khusus proyek ini
 
 **Tidak ada folder `public/`.** Document root menunjuk ke akar proyek, dan
-`index.php` di akar bertindak sebagai front controller. Proteksi terhadap
-`app/`, `config/`, `storage/`, dan `.env` mengandalkan `.htaccess`.
+`index.php` di akar bertindak sebagai front controller. Artinya seluruh kode
+sumber berada di dalam jangkauan web.
 
-`.htaccess` hanya berlaku di Apache. **Kalau situs ini dilayani nginx,
-berkas-berkas itu tidak terlindungi** dan `.env` bisa diunduh siapa pun. Uji
-sekali:
+Berkas `.htaccess` di akar proyek tidak menolong sama sekali — servernya nginx,
+dan nginx tidak pernah membaca `.htaccess`. Ini sudah terbukti terbuka di
+produksi: `storage/logs/laravel.log`, `composer.json`, dan `deploy/auto-deploy.sh`
+sama-sama menjawab `200` sebelum diperbaiki. Log Laravel yang terparah — isinya
+query berikut nilainya dan potongan galat.
+
+Penutupnya ada di `deploy/nginx-keamanan.conf`; cara memasangnya ditulis di
+kepala berkas itu. Aturannya ditaruh di folder `extension/` aaPanel, bukan di
+vhost utama, karena vhost ditulis ulang panel setiap kali pengaturan situs
+diubah lewat panel.
+
+Setelah dipasang, uji ulang. **Pakai parameter acak** — tanpa itu Anda bisa
+membaca jawaban `200` lama yang masih tersimpan di cache dan mengira
+perbaikannya gagal:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' https://pos.aldeftech.com/.env
+for jalur in /.env /storage/logs/laravel.log /composer.json /deploy/auto-deploy.sh; do
+    printf '%-34s %s\n' "$jalur" \
+      "$(curl -s -o /dev/null -w '%{http_code}' "https://pos.aldeftech.com${jalur}?x=$RANDOM")"
+done
 ```
 
-`403` atau `404` berarti aman. **`200` berarti kredensial database Anda terbuka
-ke internet** dan harus segera ditutup lewat aturan nginx.
+Semuanya harus `403` atau `404`. Halaman depan dan `/admin/login` harus tetap
+`200` — kalau ikut terblokir berarti ada aturan yang kelewat luas.
 
 **Tidak ada build aset** — tidak ada `package.json`; CSS dan JS disajikan
 langsung dari `assets/`. Jadi deploy tidak perlu Node.js.
