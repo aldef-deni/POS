@@ -111,6 +111,34 @@ done
 Semuanya harus `403` atau `404`. Halaman depan dan `/admin/login` harus tetap
 `200` — kalau ikut terblokir berarti ada aturan yang kelewat luas.
 
+**`.user.ini` milik panel, bukan milik kode.** aaPanel menulisnya untuk tiap
+situs lalu menguncinya dengan `chattr +i`. Berkas itu dulu ikut terlacak git
+(warisan salinan cPanel), dan akibatnya `git reset --hard` gagal seluruhnya:
+
+```
+error: unable to unlink old '.user.ini': Operation not permitted
+fatal: Could not reset index file to revision '...'
+```
+
+Satu berkas itu menggagalkan pembaruan **dan** rollback-nya sekaligus — terjadi
+2026-08-29. Sekarang berkas itu diabaikan git, dan `auto-deploy.sh` tetap
+membuka kuncinya sebentar selama operasi git lalu memasangnya kembali, sambil
+menyimpan salinan supaya isinya bisa dikembalikan kalau git sempat menghapusnya.
+
+**`.env` tidak ada di git, dan memang tidak boleh ada.** Contohnya di
+`.env.production.example`; salin jadi `.env` di server lalu isi bagian
+bertanda `GANTI_`, dan buat kuncinya di server sendiri:
+
+```bash
+sudo -u www /www/server/php/84/bin/php artisan key:generate
+```
+
+Sebelumnya berkas `.env.production` berisi kredensial asli ikut ter-commit ke
+repo publik ini. Nilai yang pernah ada di sana — password database cPanel lama
+dan `APP_KEY` — harus dianggap bocor selamanya dan tidak boleh dipakai lagi,
+termasuk di sistem lain. Menghapusnya dari commit terbaru tidak menghapusnya
+dari riwayat.
+
 **Tidak ada build aset** — tidak ada `package.json`; CSS dan JS disajikan
 langsung dari `assets/`. Jadi deploy tidak perlu Node.js.
 

@@ -117,10 +117,69 @@ nyalakan_lagi() {
     SITUS_MATI=0
 }
 
-# Satu-satunya trap EXIT di skrip ini. Menggabungkan dua tugas supaya trap
+# --------------------------------------------------- .user.ini milik panel
+#
+# aaPanel menulis .user.ini untuk tiap situs (open_basedir dan kawannya) lalu
+# menguncinya dengan "chattr +i" supaya tidak bisa diubah lewat web. Berkas itu
+# milik panel, bukan milik kode.
+#
+# Kalau git sampai perlu menyentuhnya, seluruh reset dibatalkan:
+#
+#   error: unable to unlink old '.user.ini': Operation not permitted
+#   fatal: Could not reset index file to revision '...'
+#
+# Satu berkas itu menggagalkan pembaruan DAN rollback-nya sekaligus - persis
+# yang terjadi pada 2026-08-29. Karena itu kuncinya dibuka sepanjang operasi
+# git, isinya disalin lebih dulu, lalu keduanya dikembalikan apa pun hasilnya.
+#
+# Salinannya ditaruh di storage/ karena folder itu tidak dilacak git, jadi
+# reset --hard tidak akan ikut membuangnya.
+USER_INI="${APP_DIR}/.user.ini"
+USER_INI_SALINAN="${APP_DIR}/storage/.user.ini.simpan"
+USER_INI_TERKUNCI=0
+
+buka_user_ini() {
+    [ -f "$USER_INI" ] || return 0
+    cp -p "$USER_INI" "$USER_INI_SALINAN" 2>/dev/null || true
+    command -v chattr >/dev/null 2>&1 || return 0
+    if lsattr -d "$USER_INI" 2>/dev/null | awk '{print $1}' | grep -q i; then
+        chattr -i "$USER_INI" 2>/dev/null && USER_INI_TERKUNCI=1
+    fi
+}
+
+kembalikan_user_ini() {
+    # Git mungkin menghapusnya - versi cPanel lama pernah ikut terlacak, dan
+    # commit yang mengeluarkannya dari pelacakan membuat reset menghapus
+    # berkas di server. Tanpa .user.ini, PHP kehilangan open_basedir situs.
+    if [ ! -f "$USER_INI" ] && [ -f "$USER_INI_SALINAN" ]; then
+        if cp -p "$USER_INI_SALINAN" "$USER_INI" 2>/dev/null; then
+            catat ".user.ini dikembalikan setelah dihapus git."
+        fi
+    fi
+
+    if [ "$USER_INI_TERKUNCI" = "1" ] && [ -f "$USER_INI" ]; then
+        command -v chattr >/dev/null 2>&1 && chattr +i "$USER_INI" 2>/dev/null || true
+    fi
+    USER_INI_TERKUNCI=0
+}
+
+# Seluruh "git reset --hard" lewat sini, tidak ada pengecualian.
+reset_keras() {
+    # Kodenya ditangkap dengan "|| hasil=$?", bukan "$?" di baris terpisah:
+    # skrip ini memakai "set -e", dan di konteks tertentu kegagalan git akan
+    # menghentikan skrip sebelum sempat memasang kembali kunci .user.ini.
+    local hasil=0
+    buka_user_ini
+    g reset --hard "$1" >>"$LOG" 2>&1 || hasil=$?
+    kembalikan_user_ini
+    return $hasil
+}
+
+# Satu-satunya trap EXIT di skrip ini. Menggabungkan tiga tugas supaya trap
 # bersarang tidak saling menimpa - kesalahan klasik yang membuat kunci
 # tertinggal atau situs ditinggal mati.
 bersihkan() {
+    kembalikan_user_ini
     [ "$SITUS_MATI" = "1" ] && nyalakan_lagi
     rm -rf "$LOCKDIR"
 }
@@ -203,7 +262,7 @@ jalankan() {
     # perubahan lokal di server tidak pernah dimaksudkan untuk dipertahankan.
     # TANPA git clean - berkas pengguna di storage/ tidak terlacak git dan
     # harus tetap ada.
-    if ! g reset --hard "$tujuan" >>"$LOG" 2>&1; then
+    if ! reset_keras "$tujuan"; then
         catat "GAGAL memperbarui kode."
         return 1
     fi
@@ -284,7 +343,7 @@ catat "DEPLOY GAGAL. Mengembalikan kode ke ${SEBELUM:0:8}."
 cd "$APP_DIR" || exit 1
 
 if [ -n "$SEBELUM" ]; then
-    g reset --hard "$SEBELUM" >>"$LOG" 2>&1 || catat "GAGAL mengembalikan kode."
+    reset_keras "$SEBELUM" || catat "GAGAL mengembalikan kode."
     "$PHP" artisan config:clear >/dev/null 2>&1 || true
     "$PHP" artisan config:cache >>"$LOG" 2>&1 || true
     "$PHP" artisan route:cache  >>"$LOG" 2>&1 || true

@@ -26,3 +26,9 @@ yarn-error.log
 /.vscode
 /.zed
 /.freebuff/
+
+# Memuat kredensial asli - hanya ada di server.
+.env.production
+
+# Ditulis dan dikunci (chattr +i) oleh panel hosting, bukan milik kode.
+.user.ini
