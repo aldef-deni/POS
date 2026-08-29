@@ -17,6 +17,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $store }} · Sistem Kasir &amp; Manajemen Toko</title>
 
+    @include('layouts.partials.icons')
+
     <meta name="description" content="Sistem kasir dengan terminal berdiri sendiri, dashboard pengelola berbasis peran, stok per outlet, dan laporan lengkap siap ekspor PDF.">
 
     <script>
@@ -36,15 +38,12 @@
     {{-- ======================= Header ======================= --}}
     <header class="site-header">
         <div class="site-header__inner">
-            <a href="{{ route('landing') }}" class="site-brand">
-                <span class="aldef-chip aldef-chip--sm">
-                    <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt="Aldef Tech"
-                         width="32" height="32" decoding="async">
-                </span>
-                <span>
-                    <span class="site-brand__name">{{ $store }}</span>
-                    <span class="site-brand__sub">Point of Sale by Aldef Tech</span>
-                </span>
+            {{-- Halaman ini etalase produk Aldef Tech, bukan etalase toko yang
+                 memakainya, jadi yang berdiri di kop adalah logo Aldef Tech. --}}
+            <a href="{{ route('landing') }}" class="site-brand" aria-label="{{ config('brand.name') }}">
+                <img src="{{ asset_v('assets/img/aldef-landscape.png') }}"
+                     alt="{{ config('brand.name') }}" class="site-brand__logo"
+                     width="600" height="192" decoding="async">
             </a>
 
             <nav class="site-nav">
@@ -334,15 +333,11 @@
         <div class="site-footer__inner">
             <div class="site-footer__grid">
                 <div>
-                    <a href="{{ route('landing') }}" class="site-brand mb-12">
-                        <span class="aldef-chip aldef-chip--sm">
-                            <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt=""
-                                 width="32" height="32" loading="lazy" decoding="async">
-                        </span>
-                        <span>
-                            <span class="site-brand__name">{{ $store }}</span>
-                            <span class="site-brand__sub">Point of Sale</span>
-                        </span>
+                    <a href="{{ route('landing') }}" class="site-brand mb-16"
+                       aria-label="{{ config('brand.name') }}">
+                        <img src="{{ asset_v('assets/img/aldef-landscape.png') }}"
+                             alt="{{ config('brand.name') }}" class="site-footer__logo"
+                             width="600" height="192" loading="lazy" decoding="async">
                     </a>
 
                     <p class="small muted" style="max-width:320px;line-height:1.65">
@@ -366,33 +361,32 @@
                 </div>
 
                 <div>
-                    <div class="site-footer__title">Kontak Toko</div>
+                    <div class="site-footer__title">Hubungi</div>
 
-                    @if ($tenant?->address)
-                        <p class="small muted" style="line-height:1.65">
-                            {{ $tenant->address }}@if ($tenant->city)<br>{{ $tenant->city }}@endif
-                        </p>
-                    @endif
+                    <a href="mailto:{{ config('brand.email') }}" class="site-footer__link">
+                        {{ config('brand.email') }}
+                    </a>
 
-                    @if ($tenant?->phone)
-                        <a href="tel:{{ preg_replace('/\s+/', '', $tenant->phone) }}" class="site-footer__link">
-                            {{ $tenant->phone }}
-                        </a>
-                    @endif
+                    <a href="https://wa.me/{{ config('brand.whatsapp') }}?text={{ rawurlencode(config('brand.whatsapp_text')) }}"
+                       class="site-footer__link" target="_blank" rel="noopener">
+                        {{ config('brand.phone') }}
+                    </a>
 
-                    @if ($tenant?->email)
-                        <a href="mailto:{{ $tenant->email }}" class="site-footer__link">{{ $tenant->email }}</a>
-                    @endif
+                    <a href="{{ config('brand.maps') }}" class="site-footer__link"
+                       target="_blank" rel="noopener">
+                        {{ config('brand.location') }}
+                    </a>
                 </div>
             </div>
 
             <div class="site-footer__bottom">
-                <span>&copy; {{ now()->year }} {{ $tenant?->legal_name ?? $store }}. Seluruh hak cipta dilindungi.</span>
+                <span>&copy; {{ now()->year }} {{ config('brand.name') }}. Seluruh hak cipta dilindungi.</span>
 
-                <span class="aldef-credit">
-                    <img src="{{ asset_v('assets/img/aldef-mark.png') }}" alt=""
-                         width="16" height="16" loading="lazy" decoding="async">
-                    Dikembangkan oleh Aldef Tech
+                <span class="site-footer__credit">
+                    <span class="muted">{{ config('brand.tagline') }}</span>
+                    <span aria-hidden="true">·</span>
+                    <a href="{{ config('brand.site') }}" class="site-footer__link" style="display:inline"
+                       target="_blank" rel="noopener">aldeftech.com</a>
                 </span>
             </div>
         </div>

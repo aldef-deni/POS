@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Riwayat Transaksi · Kasir</title>
 
+    @include('layouts.partials.icons')
+
     <script>
         try {
             var t = localStorage.getItem('kasir.theme');

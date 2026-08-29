@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tutup Shift · {{ $tenant?->name }}</title>
+
+    @include('layouts.partials.icons')
     <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset_v('assets/css/pos.css') }}">
 </head>

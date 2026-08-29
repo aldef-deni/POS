@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Profil Saya · Kasir</title>
 
+    @include('layouts.partials.icons')
+
     <script>
         try {
             var t = localStorage.getItem('kasir.theme');

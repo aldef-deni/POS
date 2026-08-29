@@ -30,7 +30,7 @@ return [
     | yang mencoba demo.
     */
     'tenant_slug' => 'demo-aldeftech',
-    'tenant_name' => 'Toko Demo Aldef Tech',
+    'tenant_name' => 'POS Aldef Tech',
 
     'reset_after_hours' => 24,
 

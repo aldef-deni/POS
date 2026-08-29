@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') · {{ $tenant?->name ?? config('app.name') }}</title>
 
+    @include('layouts.partials.icons')
+
     {{-- Applied before first paint so a dark-mode user never sees a flash. --}}
     <script>
         try {

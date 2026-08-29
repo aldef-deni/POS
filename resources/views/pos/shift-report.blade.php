@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Laporan Shift #{{ $shift->id }}</title>
+
+    @include('layouts.partials.icons')
     <link rel="stylesheet" href="{{ asset_v('assets/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset_v('assets/css/pos.css') }}">
     <style>

@@ -23,8 +23,15 @@
 
 .site-brand { display: flex; align-items: center; gap: 11px; color: var(--text); }
 .site-brand:hover { color: var(--text); }
-.site-brand__name { font-weight: 680; font-size: 15px; letter-spacing: -.015em; line-height: 1.2; }
-.site-brand__sub { font-size: 11px; color: var(--text-subtle); }
+
+/* The lockup carries the name itself, so it is sized to be read rather than
+   tucked into a corner. Height drives it; width follows the aspect ratio. */
+.site-brand__logo {
+    height: 52px; width: auto;
+    display: block;
+    transition: opacity .15s ease;
+}
+.site-brand:hover .site-brand__logo { opacity: .85; }
 
 .site-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 
@@ -233,6 +240,9 @@
     padding-bottom: 40px;
 }
 
+/* Larger than the header: down here it is the anchor of the whole block. */
+.site-footer__logo { height: 58px; width: auto; display: block; }
+
 .site-footer__title {
     font-size: 11.5px; font-weight: 680;
     text-transform: uppercase; letter-spacing: .1em;
@@ -256,6 +266,8 @@
     font-size: 12.5px; color: var(--text-subtle);
 }
 
+.site-footer__credit { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
 /* --- Responsive ---------------------------------------------------------- */
 
 @media (max-width: 960px) {
@@ -270,12 +282,13 @@
     .site-header__inner { padding: 10px 16px; gap: 10px; }
     .site-header__actions { margin-left: auto; flex: 0 0 auto; }
 
-    /* The store name yields first — the two entrance buttons are the point
-       of the header, so they never get squeezed off the edge. */
+    /* The logo yields first — the two entrance buttons are the point of the
+       header, so they never get squeezed off the edge. */
     .site-brand { min-width: 0; }
-    .site-brand__name, .site-brand__sub {
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
+    .site-brand__logo { max-width: 100%; object-fit: contain; object-position: left; }
+
+    .site-brand__logo { height: 34px; }
+    .site-footer__logo { height: 46px; }
 
     .hero { padding: 56px 20px 48px; }
     .section { padding: 48px 20px; }

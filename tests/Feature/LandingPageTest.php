@@ -56,8 +56,11 @@ class LandingPageTest extends PosTestCase
             ->assertDontSee(route('admin.login'));
     }
 
-    public function test_it_keeps_the_store_contact_details_it_is_given(): void
+    public function test_the_footer_carries_aldef_tech_contact_not_the_tenant(): void
     {
+        // This page sells the product, so the way to reach someone about it is
+        // Aldef Tech's — never the contact of whichever store happens to be
+        // loaded in the request.
         $this->tenant->update([
             'phone' => '021-555-0188',
             'email' => 'halo@tokouji.id',
@@ -66,9 +69,31 @@ class LandingPageTest extends PosTestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('021-555-0188')
-            ->assertSee('halo@tokouji.id')
-            ->assertSee('Jl. Merdeka No. 88');
+            ->assertSee(config('brand.email'))
+            ->assertSee(config('brand.phone'))
+            ->assertDontSee('021-555-0188')
+            ->assertDontSee('halo@tokouji.id')
+            ->assertDontSee('Jl. Merdeka No. 88');
+    }
+
+    public function test_the_header_and_footer_show_the_aldef_lockup(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('site-brand__logo', false)
+            ->assertSee('site-footer__logo', false)
+            ->assertSee('aldef-landscape.png', false);
+    }
+
+    public function test_every_page_points_at_the_site_icons(): void
+    {
+        foreach (['/', '/admin/login', '/pos/login'] as $path) {
+            $this->get($path)
+                ->assertOk()
+                ->assertSee('favicon.ico', false)
+                ->assertSee('apple-touch-icon.png', false)
+                ->assertSee('site.webmanifest', false);
+        }
     }
 
     public function test_it_never_exposes_the_catalogue_or_the_operators(): void

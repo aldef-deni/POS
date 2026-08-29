@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Kasir · {{ $tenant?->name }}</title>
 
+    @include('layouts.partials.icons')
+
     <script>
         try {
             var t = localStorage.getItem('kasir.theme');
