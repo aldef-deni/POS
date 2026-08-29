@@ -155,6 +155,14 @@ Terminal  : /pos/login  (PIN)
   Kasir Demo 2  PIN 5678
 ```
 
+Di terminal kasir, operator demo bertanda **Demo** dan PIN-nya terisi sendiri
+begitu dipilih — pengunjung cukup menekan Masuk. Nilainya diambil dari
+`config('demo.cashier_pins')`, sumber yang sama yang dipakai `DemoSeeder` saat
+membuat akunnya, karena `pos_pin` tersimpan ter-hash dan tidak bisa dibaca
+ulang. Yang menentukan boleh-tidaknya adalah **tenant**, bukan nama akun —
+kasir pelanggan tidak akan pernah menampilkan apa pun, dan PIN aslinya memang
+tidak ada yang menyimpan.
+
 Tenant tersendiri (`demo-aldeftech`), terpisah dari pelanggan. Akun demo
 berperan Owner, dan Owner melihat seluruh outlet berikut laporan labanya —
 menaruhnya di tenant asli berarti membuka data penjualan pelanggan kepada siapa

@@ -151,7 +151,7 @@ class DemoSeeder extends DatabaseSeeder
         // Satu kasir untuk setiap outlet. Tanpa ini outlet kedua tidak punya
         // siapa pun yang bertransaksi, dan laporan perbandingan cabang -
         // salah satu hal yang ingin diperlihatkan demo - tampil kosong.
-        $pin = ['1234', '5678', '2468'];
+        $pin = (array) config('demo.cashier_pins');
 
         foreach (array_keys($outlets) as $i => $kode) {
             $operators[] = [

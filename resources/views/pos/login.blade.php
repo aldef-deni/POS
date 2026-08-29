@@ -55,6 +55,12 @@
             <h1 style="font-size:22px">Masuk Kasir</h1>
             <p class="muted mt-4" style="font-size:13px">Pilih operator, lalu masukkan PIN Anda.</p>
 
+            @if(!empty($demoPins))
+                <p class="muted mt-4" style="font-size:12px">
+                    Operator bertanda <b>Demo</b> terisi PIN-nya sendiri — cukup tekan Masuk.
+                </p>
+            @endif
+
             @if (session('error'))
                 <div class="alert alert--bad mt-16">
                     <x-icon name="alert" size="17" class="alert__icon"/>
@@ -100,7 +106,9 @@
                     <div class="tiny subtle upper mb-8 t-center">Pilih operator</div>
                     <div class="operator-strip mb-16">
                         @foreach ($operators as $operator)
-                            <button type="button" class="operator" data-operator="{{ $operator->id }}">
+                            @php($pinDemo = $demoPins[$operator->id] ?? null)
+                            <button type="button" class="operator" data-operator="{{ $operator->id }}"
+                                @if($pinDemo) data-pin-demo="{{ $pinDemo }}" @endif>
                                 <span class="avatar">
                                     @if ($operator->avatarUrl())
                                         <img src="{{ $operator->avatarUrl() }}" alt="">
@@ -109,6 +117,9 @@
                                     @endif
                                 </span>
                                 <span class="operator__name">{{ $operator->name }}</span>
+                                @if($pinDemo)
+                                    <span class="operator__badge">Demo</span>
+                                @endif
                             </button>
                         @endforeach
                     </div>
@@ -197,7 +208,12 @@
                 });
                 button.classList.add('is-active');
                 selected = button.getAttribute('data-operator');
-                pin = '';
+
+                // Operator demo terisi PIN-nya sendiri. Ditulis ke variabel
+                // yang sama dengan hasil ketikan keypad, jadi tetap bisa
+                // dihapus dengan C - pengunjung boleh mencoba PIN salah.
+                pin = button.getAttribute('data-pin-demo') || '';
+
                 refresh();
             });
         });

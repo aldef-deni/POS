@@ -44,4 +44,18 @@ return [
     'sales_days' => 7,
     'max_sales_per_day' => 6,
 
+    /*
+    | PIN kasir demo, satu untuk tiap outlet.
+    |
+    | Ditaruh di sini, bukan di dalam seeder, karena dua tempat memerlukannya:
+    | DemoSeeder saat membuat akunnya, dan layar masuk terminal saat mengisi
+    | PIN-nya sendiri untuk pengunjung. PIN yang tersimpan sudah ter-hash dan
+    | tidak bisa dibaca ulang, jadi tanpa satu sumber bersama keduanya pasti
+    | akan berbeda suatu hari.
+    |
+    | Hanya berlaku untuk akun di dalam tenant demo. PIN kasir pelanggan tidak
+    | pernah bisa muncul di sini - nilainya memang tidak ada yang menyimpan.
+    */
+    'cashier_pins' => ['1234', '5678', '2468'],
+
 ];

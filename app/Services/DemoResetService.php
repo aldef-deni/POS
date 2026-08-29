@@ -46,6 +46,50 @@ class DemoResetService
     }
 
     /**
+     * PIN kasir demo, kalau operator ini memang penghuni tenant demo.
+     *
+     * Nilainya datang dari config - sumber yang sama yang dipakai DemoSeeder
+     * saat membuat akunnya - bukan dari basis data, karena `pos_pin` disimpan
+     * ter-hash dan tidak bisa dikembalikan ke bentuk semula.
+     *
+     * Justru itu yang membuatnya aman: PIN kasir pelanggan tidak akan pernah
+     * bisa muncul lewat jalan ini, sebab nilainya memang tidak ada yang
+     * menyimpan di mana pun. Kecocokan nama saja tidak cukup - tenant-nya
+     * ikut diperiksa, supaya pelanggan yang kebetulan menamai kasirnya
+     * "demo-kasir1" tidak membocorkan apa pun.
+     */
+    public function pinKasir(User $user): ?string
+    {
+        if (! $this->aktif()) {
+            return null;
+        }
+
+        $tenant = $this->tenantDemo();
+
+        if (! $tenant || (int) $user->tenant_id !== (int) $tenant->id) {
+            return null;
+        }
+
+        $awalan = (string) config('demo.username').'-kasir';
+
+        if (! preg_match('/^'.preg_quote($awalan, '/').'(\d+)$/', (string) $user->username, $cocok)) {
+            return null;
+        }
+
+        $daftar = array_values((array) config('demo.cashier_pins'));
+
+        return $daftar[((int) $cocok[1]) - 1] ?? null;
+    }
+
+    /** Tenant demo, atau null bila belum pernah dibangun. */
+    public function tenantDemo(): ?Tenant
+    {
+        return Tenant::withoutGlobalScopes()
+            ->where('slug', (string) config('demo.tenant_slug'))
+            ->first();
+    }
+
+    /**
      * Pulihkan bila sudah waktunya.
      *
      * Sengaja dipanggil SEBELUM kredensial diperiksa. Kalau menunggu login
@@ -111,9 +155,7 @@ class DemoResetService
      */
     private function bersihkan(): void
     {
-        $tenant = Tenant::withoutGlobalScopes()
-            ->where('slug', (string) config('demo.tenant_slug'))
-            ->first();
+        $tenant = $this->tenantDemo();
 
         if (! $tenant) {
             return;

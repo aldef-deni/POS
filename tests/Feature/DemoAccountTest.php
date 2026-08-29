@@ -182,6 +182,80 @@ class DemoAccountTest extends TestCase
         $this->assertStringContainsString('Coba Demo', $html);
     }
 
+    public function test_layar_kasir_mengisi_pin_operator_demo(): void
+    {
+        $this->demo()->pulihkan();
+
+        $html = $this->get(route('pos.login'))->assertOk()->getContent();
+
+        // PIN kasir tersimpan ter-hash, jadi layar ini tidak mungkin membacanya
+        // dari basis data - nilainya harus datang dari config yang sama dengan
+        // yang dipakai DemoSeeder. Kalau salah satunya berubah sendiri, ini yang
+        // pertama gagal.
+        foreach ((array) config('demo.cashier_pins') as $i => $pin) {
+            if ($i >= (int) config('demo.outlets')) {
+                break;
+            }
+
+            $this->assertStringContainsString('data-pin-demo="'.$pin.'"', $html);
+        }
+    }
+
+    public function test_pin_hanya_terbuka_untuk_penghuni_tenant_demo(): void
+    {
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+        $this->demo()->pulihkan();
+
+        $kasirDemo = User::withoutGlobalScopes()
+            ->where('username', config('demo.username').'-kasir1')
+            ->firstOrFail();
+
+        $pertama = ((array) config('demo.cashier_pins'))[0];
+        $this->assertSame($pertama, $this->demo()->pinKasir($kasirDemo));
+
+        // Inti keamanannya ada pada tenant, bukan pada nama. Akun yang sama -
+        // nama, peran, dan pola username tidak diubah sama sekali - dipindah
+        // ke tenant pelanggan, dan PIN-nya harus langsung tertutup.
+        $lain = Tenant::withoutGlobalScopes()->where('slug', 'toko-utama')->firstOrFail();
+        $kasirDemo->forceFill(['tenant_id' => $lain->id])->save();
+
+        $this->assertNull(
+            $this->demo()->pinKasir($kasirDemo->refresh()),
+            'Nama yang cocok tidak boleh cukup - tenantnya yang menentukan'
+        );
+    }
+
+    public function test_pin_kasir_pelanggan_tidak_tersimpan_dalam_bentuk_terbaca(): void
+    {
+        $this->seed(\Database\Seeders\DatabaseSeeder::class);
+
+        $pelanggan = User::withoutGlobalScopes()
+            ->where('role', Role::Kasir->value)
+            ->whereNotNull('pos_pin')
+            ->firstOrFail();
+
+        // Alasan sesungguhnya kenapa fitur ini aman: PIN pelanggan memang
+        // tidak ada yang menyimpan dalam bentuk aslinya, jadi tidak ada yang
+        // bisa dibocorkan bahkan seandainya penjaga tenantnya jebol.
+        $this->assertNotSame('1234', $pelanggan->pos_pin);
+        $this->assertTrue(strlen((string) $pelanggan->pos_pin) > 20,
+            'pos_pin harus tersimpan ter-hash, bukan apa adanya');
+        $this->assertNull($this->demo()->pinKasir($pelanggan));
+    }
+
+    public function test_penanda_pin_hilang_bila_fitur_demo_dimatikan(): void
+    {
+        $this->demo()->pulihkan();
+
+        config(['demo.username' => '']);
+
+        $html = $this->get(route('pos.login'))->assertOk()->getContent();
+
+        // Nama atributnya juga muncul di dalam skrip pengisi, jadi yang diuji
+        // adalah atribut yang benar-benar terpasang pada tombol.
+        $this->assertStringNotContainsString('data-pin-demo="', $html);
+    }
+
     public function test_tombol_demo_hilang_bila_fitur_dimatikan(): void
     {
         config(['demo.username' => '']);

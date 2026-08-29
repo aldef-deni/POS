@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\DemoResetService;
 use App\Support\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,17 +24,29 @@ use Illuminate\View\View;
  */
 class PosAuthController extends Controller
 {
-    public function show(): View
+    public function show(DemoResetService $demo): View
     {
-        // The till is staffed by cashiers, so only they are offered here —
+        // The till is staffed by cashiers, so only they are offered here -
         // and only once a PIN has been set for them.
         $operators = User::where('is_active', true)
             ->where('role', Role::Kasir->value)
             ->whereNotNull('pos_pin')
             ->orderBy('name')
-            ->get(['id', 'name', 'username', 'role', 'avatar_path']);
+            ->get(['id', 'tenant_id', 'name', 'username', 'role', 'avatar_path']);
 
-        return view('pos.login', compact('operators'));
+        // PIN kasir demo diisikan sendiri saat operatornya dipilih. Pengunjung
+        // tidak punya cara menebaknya, dan menuliskannya di teks bantuan sama
+        // terbukanya dengan menaruhnya di sini - hanya lebih merepotkan.
+        //
+        // Hanya operator milik tenant demo yang menghasilkan nilai; PIN kasir
+        // pelanggan disimpan ter-hash sehingga memang tidak ada yang bisa
+        // dibocorkan lewat jalan ini.
+        $demoPins = $operators
+            ->mapWithKeys(fn (User $operator) => [$operator->id => $demo->pinKasir($operator)])
+            ->filter()
+            ->all();
+
+        return view('pos.login', compact('operators', 'demoPins'));
     }
 
     public function login(Request $request): RedirectResponse
