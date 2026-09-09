@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://aldeftech.com" target="_blank">
+  <a href="https://pos.aldeftech.com" target="_blank">
     <img src="assets/img/aldef-landscape.png" width="520" alt="Logo Aldef Tech">
   </a>
 </p>
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://aldeftech.com"><img src="https://img.shields.io/badge/Website-aldeftech.com-0ea5e9?style=flat-square" alt="Website Aldef Tech"></a>
+  <a href="https://pos.aldeftech.com"><img src="https://img.shields.io/badge/Website-pos.aldeftech.com-0ea5e9?style=flat-square" alt="Website Kasir POS"></a>
   <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 11">
   <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP 8.2 atau lebih baru">
   <img src="https://img.shields.io/badge/POS-Multi--Outlet-22c55e?style=flat-square" alt="POS Multi-Outlet">
