@@ -1,13 +1,25 @@
-# Kasir POS — SaaS Point of Sale
+<p align="center">
+  <a href="https://aldeftech.com" target="_blank">
+    <img src="assets/img/aldef-landscape.png" width="520" alt="Logo Aldef Tech">
+  </a>
+</p>
+
+<h1 align="center">Kasir POS</h1>
+
+<p align="center">
+  <strong>SaaS Point of Sale untuk operasional toko dan multi-outlet.</strong>
+</p>
+
+<p align="center">
+  <a href="https://aldeftech.com"><img src="https://img.shields.io/badge/Website-aldeftech.com-0ea5e9?style=flat-square" alt="Website Aldef Tech"></a>
+  <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square&logo=laravel&logoColor=white" alt="Laravel 11">
+  <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP 8.2 atau lebih baru">
+  <img src="https://img.shields.io/badge/POS-Multi--Outlet-22c55e?style=flat-square" alt="POS Multi-Outlet">
+</p>
 
 Aplikasi kasir berbasis **Laravel 11** dengan terminal kasir yang berdiri sendiri,
 dashboard pengelola berbasis peran, pembuatan ID/barcode/QR produk otomatis, dan
 pelaporan lengkap yang dapat diekspor ke PDF & CSV.
-
-Dibangun **tanpa folder `public`** — dokumen root langsung di root project,
-sehingga cukup di-unzip ke `public_html` pada cPanel.
-
----
 
 ## 1. Akun Contoh
 
@@ -241,90 +253,7 @@ Selain itu tersedia: **Invoice PDF** per transaksi dan **Laporan Tutup Shift PDF
 
 ---
 
-## 8. Deploy ke cPanel
-
-Aplikasi ini **tidak memakai folder `public`**. Seluruh isi ZIP langsung
-diletakkan di `public_html` (atau folder domain/subdomain Anda).
-
-1. **Upload & ekstrak**
-   Unggah `kasir-pos-vX.zip` ke `public_html`, klik *Extract*.
-   Pastikan `index.php` dan `.htaccess` berada langsung di dalam `public_html`.
-
-2. **Buat database MySQL**
-   cPanel → *MySQL Databases* → buat database + user, beri **ALL PRIVILEGES**.
-
-3. **Atur `.env`**
-   File `.env` sudah disertakan. Sesuaikan minimal:
-   ```
-   APP_URL=https://domain-anda.com
-   DB_DATABASE=nama_database
-   DB_USERNAME=user_database
-   DB_PASSWORD=kata_sandi
-   ```
-
-4. **Set versi PHP ke 8.2+**
-   cPanel → *MultiPHP Manager*. Ekstensi wajib: `pdo_mysql`, `mbstring`,
-   `openssl`, `gd`, `dom`, `fileinfo`, `zip`.
-
-5. **Jalankan migrasi**
-   Lewat *Terminal* cPanel:
-   ```bash
-   cd ~/public_html
-   php artisan key:generate      # hanya jika APP_KEY kosong
-   php artisan migrate --force
-   php artisan db:seed --force   # opsional: data contoh + akun
-   php artisan optimize
-   ```
-
-   Bila Terminal tidak tersedia, gunakan *Setup Node/PHP App* atau impor SQL
-   secara manual lewat phpMyAdmin.
-
-6. **Izin folder**
-   `storage/` dan `uploads/` harus dapat ditulis (`755`, atau `775` bila perlu).
-
-7. **Selesai** — buka `https://domain-anda.com`.
-
-### Catatan keamanan
-
-`.htaccess` di root sudah memblokir akses langsung ke `app/`, `config/`,
-`database/`, `routes/`, `storage/`, `vendor/`, `.env`, dan file sensitif lain,
-karena folder-folder tersebut kini berada di bawah dokumen root. **Jangan hapus
-atau timpa file `.htaccess` tersebut.**
-
-File yang diunggah pengguna disimpan di `uploads/` dan tidak dapat dieksekusi
-sebagai PHP (`uploads/.htaccess`).
-
----
-
-## 9. Menjalankan di Lokal
-
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-# sesuaikan DB_* di .env
-php artisan migrate --seed
-php artisan serve
-```
-
-Tidak ada langkah `npm`/build — CSS dan JavaScript ditulis langsung di
-`assets/` tanpa bundler, supaya deploy cukup dengan unzip.
-
-### Menjalankan test
-
-```bash
-# buat dulu databasenya sekali saja
-mysql -u root -e "CREATE DATABASE kasir_pos_test"
-php artisan test
-```
-
-39 test mencakup: pemisahan peran & guard, perhitungan checkout (pajak,
-diskon, pembulatan, split payment), pengurangan stok, penomoran invoice,
-pembatalan transaksi, pembuatan ID/barcode/QR, dan ekspor laporan.
-
----
-
-## 10. Pintasan Keyboard di Terminal Kasir
+## 8. Pintasan Keyboard di Terminal Kasir
 
 | Tombol | Fungsi |
 |---|---|
@@ -339,7 +268,7 @@ Kolom pindai selalu merebut fokus kembali, sehingga scanner barcode
 
 ---
 
-## 11. Struktur Penting
+## 9. Struktur Penting
 
 ```
 index.php              front controller (dokumen root)
@@ -355,7 +284,7 @@ resources/views/print/ struk termal, invoice PDF, laporan PDF
 
 ---
 
-## 12. Catatan Teknis
+## 10. Catatan Teknis
 
 - **Perhitungan harga selalu dihitung ulang di server.** Nominal yang dikirim
   browser hanya untuk tampilan; harga diambil dari database saat checkout.
@@ -369,3 +298,25 @@ resources/views/print/ struk termal, invoice PDF, laporan PDF
   tersedia di Laravel 12+ (CRLF pada aturan validasi `email`, dan signed URL).
   Keduanya tidak dipakai aplikasi ini, namun pertimbangkan upgrade bila nanti
   menambahkan fitur email atau tautan bertanda tangan.
+
+## Kustomisasi
+
+<p align="center">
+  <strong>JIKA BERMINAT UNTUK KUSTOMISASI BISA MENGHUBUNGI DENI AFRIZAL</strong>
+</p>
+
+<p align="center">
+  <a href="https://wa.me/628128968609" target="_blank">
+    <img src="https://img.shields.io/badge/WhatsApp-Hubungi_Deni_Afrizal-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Hubungi Deni Afrizal melalui WhatsApp">
+  </a>
+</p>
+
+## Kontak
+
+Punya kebutuhan sistem, aplikasi, SaaS, integrasi, atau otomasi AI? Kunjungi [aldeftech.com/contact](https://aldeftech.com/contact) untuk mendiskusikan kebutuhan bisnis Anda bersama Aldef Tech.
+
+---
+
+<p align="center">
+  © Aldef Tech. Seluruh hak cipta dilindungi.
+</p>
